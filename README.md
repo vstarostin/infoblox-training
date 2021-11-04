@@ -1,1 +1,1 @@
-# infblx-training
+# infoblox-training
