@@ -39,7 +39,10 @@ func (ab *AddressBook) AddUser(_ context.Context, in *pb.AddUserRequest) (*pb.Ad
 
 func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.FindUserResponse, error) {
 	name := in.GetUserName()
+
+	ab.mu.RLock()
 	user, ok := ab.data[name]
+	ab.mu.RUnlock()
 	if !ok {
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
@@ -75,15 +78,11 @@ func (ab *AddressBook) ListUser(_ context.Context, _ *empty.Empty) (*pb.ListUser
 	}
 
 	var users []*pb.User
-	ch := make(chan struct{})
-
+	ab.mu.RLock()
 	for _, user := range ab.data {
-		go func(u *pb.User) {
-			users = append(users, user)
-			ch <- struct{}{}
-		}(user)
-		<-ch
+		users = append(users, user)
 	}
+	ab.mu.RUnlock()
 
 	return &pb.ListUserResponse{
 		Users: users,
