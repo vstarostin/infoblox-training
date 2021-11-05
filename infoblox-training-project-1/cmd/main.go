@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -35,10 +36,12 @@ func main() {
 		}
 	}()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	mux := runtime.NewServeMux()
 	opt := []grpc.DialOption{grpc.WithInsecure()}
 	err = pb.RegisterAddressBookServiceHandlerFromEndpoint(
-		context.Background(), mux, fmt.Sprintf(":%d", 9090), opt,
+		ctx, mux, fmt.Sprintf(":%d", 9090), opt,
 	)
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", 8080),
@@ -59,4 +62,14 @@ func main() {
 
 	<-shutdown
 	log.Println("Shutdown signal received")
+
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("GRPC gateway server shutdown error")
+	}
+
+	grpcServer.GracefulStop()
+	log.Println("Server stopped gracefully")
 }
