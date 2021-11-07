@@ -59,16 +59,6 @@ func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.
 		}, nil
 	}
 
-	if !strings.Contains(incomingNamePattern, "*") {
-		user, ok := ab.isUserExist(incomingNamePattern)
-		if !ok {
-			return nil, status.Errorf(codes.InvalidArgument, "no such user with namepattern: %v", incomingNamePattern)
-		}
-		return &pb.FindUserResponse{
-			Users: []*pb.User{user},
-		}, nil
-	}
-
 	ab.mu.RLock()
 	for name, user := range ab.data {
 		match, err := path.Match(incomingNamePattern, name)
@@ -96,19 +86,7 @@ func (ab *AddressBook) DeleteUser(_ context.Context, in *pb.DeleteUserRequest) (
 	var count int
 	incomingNamePattern := strings.ToLower(strings.Trim(in.GetUserName(), " "))
 
-	if !strings.Contains(incomingNamePattern, "*") {
-		_, ok := ab.isUserExist(incomingNamePattern)
-		if !ok {
-			return nil, status.Errorf(codes.InvalidArgument, "no such user with namepattern: %v", incomingNamePattern)
-		}
-		ab.deleteUser(incomingNamePattern)
-
-		return &pb.DeleteUserResponse{
-			Response: "user was successfully deleted",
-		}, nil
-	}
-
-	ab.mu.RLock()
+	ab.mu.Lock()
 	for name := range ab.data {
 		match, err := path.Match(incomingNamePattern, name)
 		if err != nil {
@@ -117,10 +95,10 @@ func (ab *AddressBook) DeleteUser(_ context.Context, in *pb.DeleteUserRequest) (
 		if !match {
 			continue
 		}
-		ab.deleteUser(name)
+		delete(ab.data, name)
 		count++
 	}
-	ab.mu.RUnlock()
+	ab.mu.Unlock()
 
 	if count == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "no such user with namepattern %v", incomingNamePattern)
@@ -163,10 +141,4 @@ func (ab *AddressBook) count() int {
 	ab.mu.RLock()
 	defer ab.mu.RUnlock()
 	return len(ab.data)
-}
-
-func (ab *AddressBook) deleteUser(key string) {
-	ab.mu.Lock()
-	defer ab.mu.Unlock()
-	delete(ab.data, key)
 }

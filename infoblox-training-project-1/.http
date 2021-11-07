@@ -1,38 +1,18 @@
-GET http://127.0.0.1:8080/find/alic?
+GET http://127.0.0.1:8080/find/j[a-z][a-z][a-z]*
 
 ###
 GET http://127.0.0.1:8080/all
 
 
 ###
-DELETE http://127.0.0.1:8080/delete/john
+DELETE http://127.0.0.1:8080/delete/*
 
 ###
 POST http://127.0.0.1:8080/add
 
 {
     "newUser" : {
-        "userName": "alice",
-        "phone": "8-812-987-88-99",
-        "address": "Moscow"
-    }
-}
-###
-POST http://127.0.0.1:8080/add
-
-{
-    "newUser" : {
-        "userName": "jacke",
-        "phone": "8-812-987-88-99",
-        "address": "Moscow"
-    }
-}
-###
-POST http://127.0.0.1:8080/add
-
-{
-    "newUser" : {
-        "userName": "john",
+        "userName": "justin",
         "phone": "8-812-987-88-99",
         "address": "Moscow"
     }
