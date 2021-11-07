@@ -22,7 +22,7 @@ service AddressBookService {
             delete: "/delete/{userName}"
         };
     };
-    rpc ListUser(google.protobuf.Empty) returns (ListUserResponse) {
+    rpc ListUsers(google.protobuf.Empty) returns (ListUsersResponse) {
         option (google.api.http) = {
             get: "/all"
         };
@@ -48,7 +48,7 @@ message FindUserRequest {
 }
 
 message FindUserResponse {    
-    User user = 1;
+    repeated User users = 1;
 }
 
 message DeleteUserRequest {
@@ -59,6 +59,6 @@ message DeleteUserResponse {
     string response = 1;
 }
 
-message ListUserResponse {
+message ListUsersResponse {
     repeated User users = 1; 
 }

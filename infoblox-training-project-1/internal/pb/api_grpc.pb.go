@@ -22,7 +22,7 @@ type AddressBookServiceClient interface {
 	AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*AddUserResponse, error)
 	FindUser(ctx context.Context, in *FindUserRequest, opts ...grpc.CallOption) (*FindUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
-	ListUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListUserResponse, error)
+	ListUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListUsersResponse, error)
 }
 
 type addressBookServiceClient struct {
@@ -60,9 +60,9 @@ func (c *addressBookServiceClient) DeleteUser(ctx context.Context, in *DeleteUse
 	return out, nil
 }
 
-func (c *addressBookServiceClient) ListUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListUserResponse, error) {
-	out := new(ListUserResponse)
-	err := c.cc.Invoke(ctx, "/pb.AddressBookService/ListUser", in, out, opts...)
+func (c *addressBookServiceClient) ListUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListUsersResponse, error) {
+	out := new(ListUsersResponse)
+	err := c.cc.Invoke(ctx, "/pb.AddressBookService/ListUsers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ type AddressBookServiceServer interface {
 	AddUser(context.Context, *AddUserRequest) (*AddUserResponse, error)
 	FindUser(context.Context, *FindUserRequest) (*FindUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
-	ListUser(context.Context, *empty.Empty) (*ListUserResponse, error)
+	ListUsers(context.Context, *empty.Empty) (*ListUsersResponse, error)
 	mustEmbedUnimplementedAddressBookServiceServer()
 }
 
@@ -93,8 +93,8 @@ func (UnimplementedAddressBookServiceServer) FindUser(context.Context, *FindUser
 func (UnimplementedAddressBookServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
-func (UnimplementedAddressBookServiceServer) ListUser(context.Context, *empty.Empty) (*ListUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListUser not implemented")
+func (UnimplementedAddressBookServiceServer) ListUsers(context.Context, *empty.Empty) (*ListUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUsers not implemented")
 }
 func (UnimplementedAddressBookServiceServer) mustEmbedUnimplementedAddressBookServiceServer() {}
 
@@ -163,20 +163,20 @@ func _AddressBookService_DeleteUser_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AddressBookService_ListUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AddressBookService_ListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AddressBookServiceServer).ListUser(ctx, in)
+		return srv.(AddressBookServiceServer).ListUsers(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.AddressBookService/ListUser",
+		FullMethod: "/pb.AddressBookService/ListUsers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AddressBookServiceServer).ListUser(ctx, req.(*empty.Empty))
+		return srv.(AddressBookServiceServer).ListUsers(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -201,8 +201,8 @@ var AddressBookService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AddressBookService_DeleteUser_Handler,
 		},
 		{
-			MethodName: "ListUser",
-			Handler:    _AddressBookService_ListUser_Handler,
+			MethodName: "ListUsers",
+			Handler:    _AddressBookService_ListUsers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
