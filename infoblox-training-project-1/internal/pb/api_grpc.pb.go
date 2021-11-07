@@ -23,6 +23,7 @@ type AddressBookServiceClient interface {
 	FindUser(ctx context.Context, in *FindUserRequest, opts ...grpc.CallOption) (*FindUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	ListUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListUsersResponse, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 }
 
 type addressBookServiceClient struct {
@@ -69,6 +70,15 @@ func (c *addressBookServiceClient) ListUsers(ctx context.Context, in *empty.Empt
 	return out, nil
 }
 
+func (c *addressBookServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
+	out := new(UpdateUserResponse)
+	err := c.cc.Invoke(ctx, "/pb.AddressBookService/UpdateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AddressBookServiceServer is the server API for AddressBookService service.
 // All implementations must embed UnimplementedAddressBookServiceServer
 // for forward compatibility
@@ -77,6 +87,7 @@ type AddressBookServiceServer interface {
 	FindUser(context.Context, *FindUserRequest) (*FindUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	ListUsers(context.Context, *empty.Empty) (*ListUsersResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	mustEmbedUnimplementedAddressBookServiceServer()
 }
 
@@ -95,6 +106,9 @@ func (UnimplementedAddressBookServiceServer) DeleteUser(context.Context, *Delete
 }
 func (UnimplementedAddressBookServiceServer) ListUsers(context.Context, *empty.Empty) (*ListUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUsers not implemented")
+}
+func (UnimplementedAddressBookServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedAddressBookServiceServer) mustEmbedUnimplementedAddressBookServiceServer() {}
 
@@ -181,6 +195,24 @@ func _AddressBookService_ListUsers_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AddressBookService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AddressBookServiceServer).UpdateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.AddressBookService/UpdateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AddressBookServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AddressBookService_ServiceDesc is the grpc.ServiceDesc for AddressBookService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -203,6 +235,10 @@ var AddressBookService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListUsers",
 			Handler:    _AddressBookService_ListUsers_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _AddressBookService_UpdateUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

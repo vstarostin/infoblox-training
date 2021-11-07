@@ -126,6 +126,50 @@ func (ab *AddressBook) ListUsers(_ context.Context, _ *empty.Empty) (*pb.ListUse
 	}, nil
 }
 
+func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	name := strings.ToLower(strings.Trim(in.GetUserName(), " "))
+	user, ok := ab.isUserExist(name)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "no such user with name %v", name)
+	}
+
+	response := &pb.UpdateUserResponse{}
+
+	newUserName := in.GetUpdatedUser().GetUserName()
+	newAddress := in.GetUpdatedUser().GetAddress()
+	newPhone := in.GetUpdatedUser().GetPhone()
+
+	if newUserName != "" {
+		_, ok := ab.isUserExist(newUserName)
+		if ok {
+			return nil, status.Errorf(codes.InvalidArgument, "name %v already taken. Please choose different name", name)
+		}
+		response.UpdatedUser.UserName = newUserName
+	} else {
+		response.UpdatedUser.UserName = user.GetUserName()
+	}
+
+	if newAddress != "" {
+		response.UpdatedUser.Address = newAddress
+	} else {
+		response.UpdatedUser.Address = user.GetAddress()
+	}
+
+	if newPhone != "" {
+		response.UpdatedUser.Phone = newPhone
+	} else {
+		response.UpdatedUser.Phone = user.GetPhone()
+	}
+
+	ab.mu.Lock()
+	delete(ab.data, name)
+	ab.data[response.GetUpdatedUser().GetUserName()] = response.GetUpdatedUser()
+	ab.mu.Unlock()
+	response.Response = "successfully updated"
+
+	return response, nil
+}
+
 func (ab *AddressBook) isUserExist(name string) (*pb.User, bool) {
 	ab.mu.RLock()
 	user, ok := ab.data[name]

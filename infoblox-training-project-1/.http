@@ -1,4 +1,4 @@
-GET http://127.0.0.1:8080/find/j[a-z][a-z][a-z]*
+GET http://127.0.0.1:8080/find/*
 
 ###
 GET http://127.0.0.1:8080/all
@@ -12,8 +12,19 @@ POST http://127.0.0.1:8080/add
 
 {
     "newUser" : {
-        "userName": "justin",
+        "userName": "john",
         "phone": "8-812-987-88-99",
-        "address": "Moscow"
+        "address": "moscow"
+    }
+}
+
+###
+POST http://127.0.0.1:8080/update/john
+
+{
+    "updatedUser" : {
+        "userName": "john doe",
+        "phone": "1-343-122-43-56",
+        "address": "new mexico"
     }
 }

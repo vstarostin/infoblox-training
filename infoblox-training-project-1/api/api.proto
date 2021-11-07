@@ -27,12 +27,28 @@ service AddressBookService {
             get: "/all"
         };
     };
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+        option (google.api.http) = {
+            post: "/update/{userName}"
+            body: "*"
+        };
+    };
 }
 
 message User {
     string userName = 1;
     string phone = 2;
     string address = 3;
+}
+
+message UpdateUserRequest {
+    User updatedUser = 1;
+    string userName = 2;
+}
+
+message UpdateUserResponse {
+    string response = 1;
+    User updatedUser = 2;
 }
 
 message AddUserRequest {
@@ -62,3 +78,4 @@ message DeleteUserResponse {
 message ListUsersResponse {
     repeated User users = 1; 
 }
+

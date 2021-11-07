@@ -12,7 +12,7 @@ docker-build-generator:
 
 .PHONE: gen-proto
 gen-proto: docker-build-generator
-	@docker run\
+	@docker run -d --rm \
 		-v `pwd`/api:/api \
 		-v `pwd`/internal/pb:/pb \
 		generator protoc \
