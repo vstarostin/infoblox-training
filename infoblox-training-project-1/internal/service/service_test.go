@@ -187,8 +187,36 @@ func TestUpdateUser(t *testing.T) {
 		UpdatedUser: updatedUser,
 	}
 
+	expectedResponse_without_error := &pb.UpdateUserResponse{
+		Response: UpdateUserMethodResponse,
+	}
 	expectedErr := status.Errorf(codes.InvalidArgument, ErrNoSuchUser, updateUserRequest.GetUserName())
-	gotResponse, err := addressBook.UpdateUser(ctx, updateUserRequest)
-	assert.Equal(t, expectedErr, err)
-	assert.Nil(t, gotResponse)
+
+	tests := map[string]struct {
+		expectedResponse *pb.UpdateUserResponse
+		expectedErr      error
+	}{
+		"without_error": {
+			expectedResponse: expectedResponse_without_error,
+			expectedErr:      nil,
+		},
+		"error": {
+			expectedResponse: nil,
+			expectedErr:      expectedErr,
+		},
+	}
+
+	for name, test := range tests {
+		switch name {
+		case "error":
+			delete(addressBook.data, user.GetUserName())
+		default:
+			addressBook.data[user.GetUserName()] = user
+		}
+		t.Run(name, func(t *testing.T) {
+			gotResponse, err := addressBook.UpdateUser(ctx, updateUserRequest)
+			assert.Equal(t, test.expectedErr, err)
+			assert.Equal(t, test.expectedResponse.GetResponse(), gotResponse.GetResponse())
+		})
+	}
 }
