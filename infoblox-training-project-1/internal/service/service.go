@@ -142,7 +142,7 @@ func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (
 	if newUserName != "" {
 		_, ok := ab.isUserExist(newUserName)
 		if ok {
-			return nil, status.Errorf(codes.InvalidArgument, "name %v already taken. Please choose different name", name)
+			return nil, status.Errorf(codes.InvalidArgument, "name %v is already taken. Please choose different name", name)
 		}
 		response.UpdatedUser.UserName = newUserName
 	} else {
