@@ -36,14 +36,22 @@ func New() *AddressBook {
 }
 
 func (ab *AddressBook) AddUser(_ context.Context, in *pb.AddUserRequest) (*pb.AddUserResponse, error) {
-	name := strings.ToLower(strings.Trim(in.GetNewUser().GetUserName(), " "))
+	name := format(in.GetNewUser().GetUserName())
 	_, ok := ab.isUserExist(name)
 	if ok {
 		return nil, status.Errorf(codes.AlreadyExists, ErrUserAlreadyExist, name)
 	}
 
+	address := format(in.GetNewUser().GetAddress())
+	phone := format(in.GetNewUser().GetPhone())
+	newUser := &pb.User{
+		UserName: name,
+		Phone:    phone,
+		Address:  address,
+	}
+
 	ab.mu.Lock()
-	ab.data[name] = in.GetNewUser()
+	ab.data[name] = newUser
 	ab.mu.Unlock()
 
 	return &pb.AddUserResponse{
@@ -57,7 +65,7 @@ func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.
 	var listUserResponse *pb.ListUsersResponse
 	var err error
 
-	incomingNamePattern := strings.ToLower(strings.Trim(in.GetUserName(), " "))
+	incomingNamePattern := format(in.GetUserName())
 
 	if incomingNamePattern == "" || incomingNamePattern == "*" {
 		listUserResponse, err = ab.ListUsers(context.Background(), &emptypb.Empty{})
@@ -94,7 +102,7 @@ func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.
 
 func (ab *AddressBook) DeleteUser(_ context.Context, in *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 	var count int
-	incomingNamePattern := strings.ToLower(strings.Trim(in.GetUserName(), " "))
+	incomingNamePattern := format(in.GetUserName())
 
 	ab.mu.Lock()
 	for name := range ab.data {
@@ -137,17 +145,19 @@ func (ab *AddressBook) ListUsers(_ context.Context, _ *empty.Empty) (*pb.ListUse
 }
 
 func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	name := strings.ToLower(strings.Trim(in.GetUserName(), " "))
+	name := format(in.GetUserName())
 	user, ok := ab.isUserExist(name)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, ErrNoSuchUser, name)
 	}
 
-	response := &pb.UpdateUserResponse{}
-
-	newUserName := in.GetUpdatedUser().GetUserName()
-	newAddress := in.GetUpdatedUser().GetAddress()
-	newPhone := in.GetUpdatedUser().GetPhone()
+	response := &pb.UpdateUserResponse{
+		Response:    "",
+		UpdatedUser: &pb.User{},
+	}
+	newUserName := format(in.GetUpdatedUser().GetUserName())
+	newAddress := format(in.GetUpdatedUser().GetAddress())
+	newPhone := format(in.GetUpdatedUser().GetPhone())
 
 	if newUserName != "" {
 		_, ok := ab.isUserExist(newUserName)
@@ -195,4 +205,9 @@ func (ab *AddressBook) count() int {
 	ab.mu.RLock()
 	defer ab.mu.RUnlock()
 	return len(ab.data)
+}
+
+func format(s string) string {
+	cutset := " "
+	return strings.ToLower(strings.Trim(s, cutset))
 }
