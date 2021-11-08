@@ -28,7 +28,7 @@ func TestAddUser(t *testing.T) {
 	addressBook := New()
 	user := User
 
-	expectedResponse_without_error := &pb.AddUserResponse{Response: "successfully added"}
+	expectedResponse_without_error := &pb.AddUserResponse{Response: AddUserMethodResponse}
 	addUserRequest := &pb.AddUserRequest{
 		NewUser: user,
 	}
@@ -43,7 +43,7 @@ func TestAddUser(t *testing.T) {
 		},
 		"error": {
 			expectedResponse: nil,
-			expectedErr:      status.Errorf(codes.AlreadyExists, "user %v already exists", addUserRequest.GetNewUser().GetUserName())},
+			expectedErr:      status.Errorf(codes.AlreadyExists, ErrUserAlreadyExist, addUserRequest.GetNewUser().GetUserName())},
 	}
 
 	for name, test := range tests {
@@ -79,7 +79,7 @@ func TestFindUser(t *testing.T) {
 		},
 		"error": {
 			expectedResponse: nil,
-			expectedErr:      status.Errorf(codes.InvalidArgument, "no such user with namepattern: %v", findUserRequest.GetUserName()),
+			expectedErr:      status.Errorf(codes.InvalidArgument, ErrNoSuchUser, findUserRequest.GetUserName()),
 		},
 	}
 
@@ -104,7 +104,7 @@ func TestListUsers(t *testing.T) {
 	addressBook := New()
 	user := User
 
-	expectedErr := status.Error(codes.NotFound, "addressBook is empty")
+	expectedErr := status.Error(codes.NotFound, ErrAddressBookIsEmpty)
 	expectedResponse_without_error := &pb.ListUsersResponse{
 		Users: []*pb.User{user},
 	}
@@ -144,9 +144,9 @@ func TestDeleteUser(t *testing.T) {
 
 	deleteUserRequest := &pb.DeleteUserRequest{UserName: UserName}
 	expectedResponse_without_error := &pb.DeleteUserResponse{
-		Response: fmt.Sprintf("%d user(s) was(were) successfully deleted", 1),
+		Response: fmt.Sprintf(DeleteUserMethodResponse, 1),
 	}
-	expectedErr := status.Errorf(codes.InvalidArgument, "no such user with namepattern %v", deleteUserRequest.GetUserName())
+	expectedErr := status.Errorf(codes.InvalidArgument, ErrNoSuchUser, deleteUserRequest.GetUserName())
 
 	tests := map[string]struct {
 		expectedResponse *pb.DeleteUserResponse
@@ -187,7 +187,7 @@ func TestUpdateUser(t *testing.T) {
 		UpdatedUser: updatedUser,
 	}
 
-	expectedErr := status.Errorf(codes.InvalidArgument, "no such user with name %v", updateUserRequest.GetUserName())
+	expectedErr := status.Errorf(codes.InvalidArgument, ErrNoSuchUser, updateUserRequest.GetUserName())
 	gotResponse, err := addressBook.UpdateUser(ctx, updateUserRequest)
 	assert.Equal(t, expectedErr, err)
 	assert.Nil(t, gotResponse)

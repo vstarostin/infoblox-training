@@ -15,6 +15,16 @@ import (
 	"github.com/vstarostin/infoblox-training-project-1/internal/pb"
 )
 
+const (
+	ErrUserAlreadyExist      = "user %v already exists"
+	ErrNoSuchUser            = "no such user with name: %v"
+	ErrAddressBookIsEmpty    = "addressBook is empty"
+	ErrNameIsTaken           = "name %v is already taken. Please choose different name"
+	AddUserMethodResponse    = "successfully added"
+	DeleteUserMethodResponse = "%d user(s) was(were) successfully deleted"
+	UpdateUserMethodResponse = "successfully updated"
+)
+
 type AddressBook struct {
 	pb.UnimplementedAddressBookServiceServer
 	mu   sync.RWMutex
@@ -29,7 +39,7 @@ func (ab *AddressBook) AddUser(_ context.Context, in *pb.AddUserRequest) (*pb.Ad
 	name := strings.ToLower(strings.Trim(in.GetNewUser().GetUserName(), " "))
 	_, ok := ab.isUserExist(name)
 	if ok {
-		return nil, status.Errorf(codes.AlreadyExists, "user %v already exists", name)
+		return nil, status.Errorf(codes.AlreadyExists, ErrUserAlreadyExist, name)
 	}
 
 	ab.mu.Lock()
@@ -37,7 +47,7 @@ func (ab *AddressBook) AddUser(_ context.Context, in *pb.AddUserRequest) (*pb.Ad
 	ab.mu.Unlock()
 
 	return &pb.AddUserResponse{
-		Response: "successfully added",
+		Response: AddUserMethodResponse,
 	}, nil
 }
 
@@ -74,7 +84,7 @@ func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.
 	ab.mu.RUnlock()
 
 	if count == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "no such user with namepattern: %v", incomingNamePattern)
+		return nil, status.Errorf(codes.InvalidArgument, ErrNoSuchUser, incomingNamePattern)
 	}
 
 	return &pb.FindUserResponse{
@@ -101,17 +111,17 @@ func (ab *AddressBook) DeleteUser(_ context.Context, in *pb.DeleteUserRequest) (
 	ab.mu.Unlock()
 
 	if count == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "no such user with namepattern %v", incomingNamePattern)
+		return nil, status.Errorf(codes.InvalidArgument, ErrNoSuchUser, incomingNamePattern)
 	}
 
 	return &pb.DeleteUserResponse{
-		Response: fmt.Sprintf("%d user(s) was(were) successfully deleted", count),
+		Response: fmt.Sprintf(DeleteUserMethodResponse, count),
 	}, nil
 }
 
 func (ab *AddressBook) ListUsers(_ context.Context, _ *empty.Empty) (*pb.ListUsersResponse, error) {
 	if count := ab.count(); count == 0 {
-		return nil, status.Error(codes.NotFound, "addressBook is empty")
+		return nil, status.Error(codes.NotFound, ErrAddressBookIsEmpty)
 	}
 
 	var users []*pb.User
@@ -130,7 +140,7 @@ func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (
 	name := strings.ToLower(strings.Trim(in.GetUserName(), " "))
 	user, ok := ab.isUserExist(name)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "no such user with name %v", name)
+		return nil, status.Errorf(codes.InvalidArgument, ErrNoSuchUser, name)
 	}
 
 	response := &pb.UpdateUserResponse{}
@@ -142,7 +152,7 @@ func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (
 	if newUserName != "" {
 		_, ok := ab.isUserExist(newUserName)
 		if ok {
-			return nil, status.Errorf(codes.InvalidArgument, "name %v is already taken. Please choose different name", name)
+			return nil, status.Errorf(codes.InvalidArgument, ErrNameIsTaken, name)
 		}
 		response.UpdatedUser.UserName = newUserName
 	} else {
@@ -165,7 +175,7 @@ func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (
 	delete(ab.data, name)
 	ab.data[response.GetUpdatedUser().GetUserName()] = response.GetUpdatedUser()
 	ab.mu.Unlock()
-	response.Response = "successfully updated"
+	response.Response = UpdateUserMethodResponse
 
 	return response, nil
 }
