@@ -1,0 +1,30 @@
+GET http://127.0.0.1:8080/find/*
+
+###
+GET http://127.0.0.1:8080/all
+
+
+###
+DELETE http://127.0.0.1:8080/delete/*
+
+###
+POST http://127.0.0.1:8080/add
+
+{
+    "newUser" : {
+        "userName": "john",
+        "phone": "8-812-987-88-99",
+        "address": "moscow"
+    }
+}
+
+###
+POST http://127.0.0.1:8080/update/john
+
+{
+    "updatedUser" : {
+        "userName": "john doe",
+        "phone": "1-343-122-43-56",
+        "address": "new mexico"
+    }
+}

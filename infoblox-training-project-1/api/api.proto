@@ -1,0 +1,81 @@
+syntax = "proto3";
+package pb;
+option go_package = "github.com/vstarostin/infoblox-training-project-1/internal/pb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service AddressBookService {
+    rpc AddUser(AddUserRequest) returns (AddUserResponse) {
+        option (google.api.http) = {
+            post: "/add"
+            body: "*"
+        };
+    };
+    rpc FindUser(FindUserRequest) returns (FindUserResponse) {
+        option (google.api.http) = {
+            get: "/find/{userName}"
+        };
+    };
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
+        option (google.api.http) = {
+            delete: "/delete/{userName}"
+        };
+    };
+    rpc ListUsers(google.protobuf.Empty) returns (ListUsersResponse) {
+        option (google.api.http) = {
+            get: "/all"
+        };
+    };
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+        option (google.api.http) = {
+            post: "/update/{userName}"
+            body: "*"
+        };
+    };
+}
+
+message User {
+    string userName = 1;
+    string phone = 2;
+    string address = 3;
+}
+
+message UpdateUserRequest {
+    User updatedUser = 1;
+    string userName = 2;
+}
+
+message UpdateUserResponse {
+    string response = 1;
+    User updatedUser = 2;
+}
+
+message AddUserRequest {
+    User newUser = 1;
+}
+
+message AddUserResponse {
+    string response = 1;
+}
+
+message FindUserRequest {
+    string userName = 1;
+}
+
+message FindUserResponse {    
+    repeated User users = 1;
+}
+
+message DeleteUserRequest {
+    string userName = 1;
+}
+
+message DeleteUserResponse {
+    string response = 1;
+}
+
+message ListUsersResponse {
+    repeated User users = 1; 
+}
+
