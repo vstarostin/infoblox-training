@@ -1,6 +1,6 @@
 .PHONY: run
 run:
-	@export DB_CONNECTION_STRING=.db_conn &&go run cmd/main.go
+	@export DB_CONNECTION_STRING=./secret/.db_conn && go run cmd/main.go
 
 .PHONY: build
 build:
@@ -36,13 +36,13 @@ run-db:
 docker-build:
 	@docker build -t address-book-service .
 
-.PHONY: docker-run
-docker-run:
-	@docker run \
+.PHONY: run-service
+run-service:
+	@docker run -d --rm \
 		--name address-book-service \
-		-d \
-		--rm \
-		-p 80:8080 \
+		-p 8080:8080 \
+		-v `pwd`/secret:/secret \
+		-e DB_CONNECTION_STRING=./secret/.db_conn \
 		address-book-service
 
 .PHONY: docker-stop
