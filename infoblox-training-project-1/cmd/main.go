@@ -12,10 +12,16 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	// _ "github.com/lib/pq"
 	"google.golang.org/grpc"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	"github.com/vstarostin/infoblox-training-project-1/internal/config"
+	"github.com/vstarostin/infoblox-training-project-1/internal/handler"
+	"github.com/vstarostin/infoblox-training-project-1/internal/model"
 	"github.com/vstarostin/infoblox-training-project-1/internal/pb"
+	"github.com/vstarostin/infoblox-training-project-1/internal/repository"
 	"github.com/vstarostin/infoblox-training-project-1/internal/service"
 )
 
@@ -25,9 +31,32 @@ func main() {
 		log.Fatalf("Configuration error: %v", err)
 	}
 
-	addressBookService := service.New()
+	// dsn := "host=localhost user=postgres password=password dbname=postgres port=5432 sslmode=disable"
+	db, err := gorm.Open(postgres.Open(cfg.DBConnectionString), &gorm.Config{})
+	if err != nil {
+		log.Println("DB initializing error")
+		log.Fatal(err)
+	}
+
+	sqlDB, err := db.DB()
+	err = sqlDB.Ping()
+	if err != nil {
+		log.Println("DB pinging error")
+		log.Fatal(err)
+	}
+	defer sqlDB.Close()
+	log.Printf("Database connection successfully opened")
+
+	// users := model.User{}
+	db.AutoMigrate(&model.User{})
+	log.Println("Database migrated")
+
+	addressBookRepo := repository.New(db)
+	addressBookService := service.New(addressBookRepo)
+	addressBookHandler := handler.New(addressBookService)
+
 	grpcServer := grpc.NewServer()
-	pb.RegisterAddressBookServiceServer(grpcServer, addressBookService)
+	pb.RegisterAddressBookServiceServer(grpcServer, addressBookHandler)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPCPort))
 	if err != nil {
