@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	// _ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -31,7 +30,6 @@ func main() {
 		log.Fatalf("Configuration error: %v", err)
 	}
 
-	// dsn := "host=localhost user=postgres password=password dbname=postgres port=5432 sslmode=disable"
 	db, err := gorm.Open(postgres.Open(cfg.DBConnectionString), &gorm.Config{})
 	if err != nil {
 		log.Println("DB initializing error")
@@ -47,7 +45,6 @@ func main() {
 	defer sqlDB.Close()
 	log.Printf("Database connection successfully opened")
 
-	// users := model.User{}
 	db.AutoMigrate(&model.User{})
 	log.Println("Database migrated")
 

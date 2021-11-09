@@ -21,6 +21,7 @@ gen-proto: docker-build-generator
 		--grpc-gateway_out=. --grpc-gateway_opt=logtostderr=true --grpc-gateway_opt=paths=source_relative --grpc-gateway_opt=generate_unbound_methods=true \
 		-I /usr/local/include/. \
     	-I /api/. api.proto
+
 .PHONE: run-db
 run-db: 
 	@docker run -d --rm \
@@ -30,9 +31,22 @@ run-db:
 		-e POSTGRES_USER=postgres \
 		-e POSTGRES_PASSWORD=password \
 		postgres
+
+.PHONY: docker-build
+docker-build:
+	@docker build -t address-book-service .
+
+.PHONY: docker-run
+docker-run:
+	@docker run \
+		--name address-book-service \
+		-d \
+		--rm \
+		-p 80:8080 \
+		address-book-service
+
+.PHONY: docker-stop
+docker-stop:
+	@docker stop address-book-service
 		
 		
-		
-		
-		
-# -v `pwd`/db:/docker-entrypoint-initdb.d/ \
