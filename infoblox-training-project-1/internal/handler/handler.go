@@ -21,6 +21,8 @@ type AddressBookService interface {
 	AddUser(name, phone, address string) error
 	ListUsers() ([]model.User, error)
 	DeleteUser(name string) (string, error)
+	FindUser(name string) ([]model.User, error)
+	UpdateUser(name string, updatedUser model.User) (model.User, error)
 }
 
 func New(service AddressBookService) *AddressBook {
@@ -34,7 +36,7 @@ func (ab *AddressBook) AddUser(_ context.Context, in *pb.AddUserRequest) (*pb.Ad
 
 	err := ab.service.AddUser(name, phone, address)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Internal error")
+		return nil, status.Error(codes.AlreadyExists, err.Error())
 	}
 
 	return &pb.AddUserResponse{
@@ -56,7 +58,6 @@ func (ab *AddressBook) ListUsers(_ context.Context, _ *empty.Empty) (*pb.ListUse
 			Address:  u.Address,
 		})
 	}
-
 	return response, nil
 }
 
@@ -70,7 +71,40 @@ func (ab *AddressBook) DeleteUser(_ context.Context, in *pb.DeleteUserRequest) (
 	return &pb.DeleteUserResponse{Response: response}, nil
 }
 
+func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.FindUserResponse, error) {
+	name := format(in.GetUserName())
+	usersFromDB, err := ab.service.FindUser(name)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	var users []*pb.User
+	for _, u := range usersFromDB {
+		user := &pb.User{}
+		user.UserName, user.Address, user.Phone = u.Name, u.Address, u.Phone
+		users = append(users, user)
+	}
+	return &pb.FindUserResponse{Users: users}, nil
+}
+
+func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	name := format(in.GetUserName())
+	if strings.Contains(name, "*") {
+		return nil, status.Error(codes.InvalidArgument, "method UpdateUser does not support wildcards. Please use a concrete name")
+	}
+	newUserName := format(in.GetUpdatedUser().GetUserName())
+	newAddress := format(in.GetUpdatedUser().GetAddress())
+	newPhone := format(in.GetUpdatedUser().GetPhone())
+	updatedUser := model.User{Name: newUserName, Phone: newPhone, Address: newAddress}
+	_, err := ab.service.UpdateUser(name, updatedUser)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	return &pb.UpdateUserResponse{
+		Response: "user was successfully updated",
+	}, nil
+}
+
 func format(s string) string {
-	cutset := " "
-	return strings.ToLower(strings.Trim(s, cutset))
+	return strings.ToLower(strings.Trim(s, " "))
 }
