@@ -14,11 +14,17 @@ func New(db *gorm.DB) *Storage {
 	return &Storage{db: db}
 }
 
-func (s *Storage) Store(user model.User) {
-	s.db.Select("name", "phone", "address").Create(&user)
+func (s *Storage) Store(user model.User) *gorm.DB {
+	return s.db.Select("name", "phone", "address").Create(&user)
 }
 
-func (s *Storage) Load(name string) []model.User {
+func (s *Storage) LoadByPhone(phone string) []model.User {
+	user := []model.User{}
+	s.db.Where("phone LIKE ?", phone).Find(&user)
+	return user
+}
+
+func (s *Storage) LoadByName(name string) []model.User {
 	user := []model.User{}
 	s.db.Where("name LIKE ?", name).Find(&user)
 	return user
@@ -28,6 +34,6 @@ func (s *Storage) Delete(name string) *gorm.DB {
 	return s.db.Exec("DELETE FROM users WHERE name LIKE ?", name)
 }
 
-func (s *Storage) Update(updaterUser model.User) {
-	s.db.Exec("UPDATE users SET name=?, phone=?, address=? ", updaterUser.Name, updaterUser.Phone, updaterUser.Address)
+func (s *Storage) Update(phone string, updatedUser model.User) *gorm.DB {
+	return s.db.Exec("UPDATE users SET name=?, phone=?, address=? WHERE phone=?", updatedUser.Name, updatedUser.Phone, updatedUser.Address, phone)
 }

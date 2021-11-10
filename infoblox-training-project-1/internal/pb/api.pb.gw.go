@@ -207,14 +207,14 @@ func request_AddressBookService_UpdateUser_0(ctx context.Context, marshaler runt
 		_   = err
 	)
 
-	val, ok = pathParams["userName"]
+	val, ok = pathParams["phone"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userName")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "phone")
 	}
 
-	protoReq.UserName, err = runtime.String(val)
+	protoReq.Phone, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userName", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "phone", err)
 	}
 
 	msg, err := client.UpdateUser(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -241,14 +241,14 @@ func local_request_AddressBookService_UpdateUser_0(ctx context.Context, marshale
 		_   = err
 	)
 
-	val, ok = pathParams["userName"]
+	val, ok = pathParams["phone"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userName")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "phone")
 	}
 
-	protoReq.UserName, err = runtime.String(val)
+	protoReq.Phone, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userName", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "phone", err)
 	}
 
 	msg, err := server.UpdateUser(ctx, &protoReq)
@@ -360,7 +360,7 @@ func RegisterAddressBookServiceHandlerServer(ctx context.Context, mux *runtime.S
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb.AddressBookService/UpdateUser", runtime.WithHTTPPathPattern("/update/{userName}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/pb.AddressBookService/UpdateUser", runtime.WithHTTPPathPattern("/update/{phone}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -502,7 +502,7 @@ func RegisterAddressBookServiceHandlerClient(ctx context.Context, mux *runtime.S
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/pb.AddressBookService/UpdateUser", runtime.WithHTTPPathPattern("/update/{userName}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/pb.AddressBookService/UpdateUser", runtime.WithHTTPPathPattern("/update/{phone}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -530,7 +530,7 @@ var (
 
 	pattern_AddressBookService_ListUsers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"all"}, ""))
 
-	pattern_AddressBookService_UpdateUser_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"update", "userName"}, ""))
+	pattern_AddressBookService_UpdateUser_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"update", "phone"}, ""))
 )
 
 var (

@@ -29,7 +29,7 @@ service AddressBookService {
     };
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
         option (google.api.http) = {
-            post: "/update/{userName}"
+            post: "/update/{phone}"
             body: "*"
         };
     };
@@ -43,7 +43,7 @@ message User {
 
 message UpdateUserRequest {
     User updatedUser = 1;
-    string userName = 2;
+    string phone = 2;
 }
 
 message UpdateUserResponse {

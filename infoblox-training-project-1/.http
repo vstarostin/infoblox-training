@@ -19,12 +19,12 @@ POST http://127.0.0.1:8080/add
 }
 
 ###
-POST http://127.0.0.1:8080/update/john
+POST http://127.0.0.1:8080/update/8-812-987-88-90
 
 {
     "updatedUser" : {
         "userName": "john doe",
         "phone": "1-343-122-43-56",
-        "address": "new mexico"
+        "address": "new york"
     }
 }

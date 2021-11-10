@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	AddUserMethodResponse = "successfully added"
-	ErrUpdateUserMethod   = "method UpdateUser does not support wildcards"
+	AddUserMethodResponse    = "successfully added"
+	UpdateUserMethodResponse = "user was successfully updated"
+	ErrUpdateUserMethod      = "method UpdateUser does not support wildcards"
 )
 
 type AddressBook struct {
@@ -27,7 +28,7 @@ type AddressBookService interface {
 	ListUsers() ([]model.User, error)
 	DeleteUser(name string) (string, error)
 	FindUser(name string) ([]model.User, error)
-	UpdateUser(name string, updatedUser model.User) error
+	UpdateUser(phone string, updatedUser model.User) error
 }
 
 func New(service AddressBookService) *AddressBook {
@@ -92,21 +93,21 @@ func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.
 }
 
 func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	name := format(in.GetUserName())
-	if strings.Contains(name, "*") {
+	phone := format(in.GetPhone())
+	if strings.Contains(phone, "*") {
 		return nil, status.Error(codes.InvalidArgument, ErrUpdateUserMethod)
 	}
 	newUserName := format(in.GetUpdatedUser().GetUserName())
 	newAddress := format(in.GetUpdatedUser().GetAddress())
 	newPhone := format(in.GetUpdatedUser().GetPhone())
 	updatedUser := model.User{Name: newUserName, Phone: newPhone, Address: newAddress}
-	err := ab.service.UpdateUser(name, updatedUser)
+	err := ab.service.UpdateUser(phone, updatedUser)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	return &pb.UpdateUserResponse{
-		Response:    "user was successfully updated",
+		Response:    UpdateUserMethodResponse,
 		UpdatedUser: in.GetUpdatedUser(),
 	}, nil
 }
