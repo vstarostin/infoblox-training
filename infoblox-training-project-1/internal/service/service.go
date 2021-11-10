@@ -8,6 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	ErrUserAlreadyExist      = "user with name %s already exists. Please choose different name"
+	ErrAddressBookIsEmpty    = "addressBook is empty"
+	ErrNoSuchUser            = "no such user with name: %v"
+	DeleteUserMethodResponse = "%d user(s) was(were) deleted"
+	ErrNameIsTaken           = "name %v is already taken. Please choose different name"
+)
+
 type AddressBookService struct {
 	storage AddressBookStorage
 }
@@ -20,16 +28,15 @@ func New(storage AddressBookStorage) *AddressBookService {
 
 type AddressBookStorage interface {
 	Load(name string) []model.User
-	// LoadAll() []model.User
 	Store(user model.User)
 	Delete(name string) *gorm.DB
-	Update(user model.User) *gorm.DB
+	Update(user model.User)
 }
 
 func (abs *AddressBookService) AddUser(name, phone, address string) error {
 	user := abs.storage.Load(name)
 	if len(user) != 0 {
-		return fmt.Errorf("user with name %s already exists. Please choose different name", name)
+		return fmt.Errorf(ErrUserAlreadyExist, name)
 	}
 	u := model.User{Name: name, Phone: phone, Address: address}
 	abs.storage.Store(u)
@@ -40,7 +47,7 @@ func (abs *AddressBookService) ListUsers() ([]model.User, error) {
 	name := "%"
 	users := abs.storage.Load(name)
 	if len(users) == 0 {
-		return []model.User{}, fmt.Errorf("AddressBook is empty")
+		return []model.User{}, fmt.Errorf(ErrAddressBookIsEmpty)
 	}
 	return users, nil
 }
@@ -52,7 +59,7 @@ func (abs *AddressBookService) FindUser(name string) ([]model.User, error) {
 	name = strings.ReplaceAll(name, "*", "%")
 	users := abs.storage.Load(name)
 	if len(users) == 0 {
-		return []model.User{}, fmt.Errorf("user is not found")
+		return []model.User{}, fmt.Errorf(ErrNoSuchUser, name)
 	}
 	return users, nil
 }
@@ -62,31 +69,27 @@ func (abs *AddressBookService) DeleteUser(name string) (string, error) {
 		name = "%"
 		result := abs.storage.Delete(name)
 		if result.RowsAffected == 0 {
-			return "", fmt.Errorf("AddressBook is empty")
+			return "", fmt.Errorf(ErrAddressBookIsEmpty)
 		}
-		return fmt.Sprintf("%d user(s) was(were) successfully deleted", result.RowsAffected), nil
+		return fmt.Sprintf(DeleteUserMethodResponse, result.RowsAffected), nil
 	}
 	name = strings.ReplaceAll(name, "*", "%")
 	result := abs.storage.Delete(name)
 	if result.RowsAffected == 0 {
-		return "", fmt.Errorf("user does not exists")
+		return "", fmt.Errorf(ErrNoSuchUser, name)
 	}
-	return fmt.Sprintf("%d user(s) was(were) successfully deleted", result.RowsAffected), nil
+	return fmt.Sprintf(DeleteUserMethodResponse, result.RowsAffected), nil
 }
 
-func (abs *AddressBookService) UpdateUser(name string, updatedUser model.User) (model.User, error) {
+func (abs *AddressBookService) UpdateUser(name string, updatedUser model.User) error {
 	user := abs.storage.Load(name)
 	if len(user) == 0 {
-		return model.User{}, fmt.Errorf("user is not found")
+		return fmt.Errorf(ErrNoSuchUser, name)
 	}
-	//uncomment
-	// user = abs.storage.Load(updatedUser.Name)
-	// if len(user) != 0 {
-	// 	return model.User{}, fmt.Errorf("name %v is already taken. Please choose different name.")
-	// }
-	result := abs.storage.Update(updatedUser)
-
-	fmt.Printf("\n%d fields was updated\n\n", result.RowsAffected)
-
-	return updatedUser, nil
+	user = abs.storage.Load(updatedUser.Name)
+	if len(user) != 0 {
+		return fmt.Errorf(ErrNameIsTaken, name)
+	}
+	abs.storage.Update(updatedUser)
+	return nil
 }

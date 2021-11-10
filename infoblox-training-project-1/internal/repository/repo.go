@@ -28,6 +28,6 @@ func (s *Storage) Delete(name string) *gorm.DB {
 	return s.db.Exec("DELETE FROM users WHERE name LIKE ?", name)
 }
 
-func (s *Storage) Update(updaterUser model.User) *gorm.DB {
-	return s.db.Exec("UPDATE users SET name=?, phone=?, address=? ", updaterUser.Name, updaterUser.Phone, updaterUser.Address)
+func (s *Storage) Update(updaterUser model.User) {
+	s.db.Exec("UPDATE users SET name=?, phone=?, address=? ", updaterUser.Name, updaterUser.Phone, updaterUser.Address)
 }

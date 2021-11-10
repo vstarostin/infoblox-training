@@ -12,6 +12,11 @@ import (
 	"github.com/vstarostin/infoblox-training-project-1/internal/pb"
 )
 
+const (
+	AddUserMethodResponse = "successfully added"
+	ErrUpdateUserMethod   = "method UpdateUser does not support wildcards"
+)
+
 type AddressBook struct {
 	pb.UnimplementedAddressBookServiceServer
 	service AddressBookService
@@ -22,7 +27,7 @@ type AddressBookService interface {
 	ListUsers() ([]model.User, error)
 	DeleteUser(name string) (string, error)
 	FindUser(name string) ([]model.User, error)
-	UpdateUser(name string, updatedUser model.User) (model.User, error)
+	UpdateUser(name string, updatedUser model.User) error
 }
 
 func New(service AddressBookService) *AddressBook {
@@ -40,7 +45,7 @@ func (ab *AddressBook) AddUser(_ context.Context, in *pb.AddUserRequest) (*pb.Ad
 	}
 
 	return &pb.AddUserResponse{
-		Response: "successfully added",
+		Response: AddUserMethodResponse,
 	}, nil
 }
 
@@ -89,19 +94,20 @@ func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.
 func (ab *AddressBook) UpdateUser(_ context.Context, in *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	name := format(in.GetUserName())
 	if strings.Contains(name, "*") {
-		return nil, status.Error(codes.InvalidArgument, "method UpdateUser does not support wildcards. Please use a concrete name")
+		return nil, status.Error(codes.InvalidArgument, ErrUpdateUserMethod)
 	}
 	newUserName := format(in.GetUpdatedUser().GetUserName())
 	newAddress := format(in.GetUpdatedUser().GetAddress())
 	newPhone := format(in.GetUpdatedUser().GetPhone())
 	updatedUser := model.User{Name: newUserName, Phone: newPhone, Address: newAddress}
-	_, err := ab.service.UpdateUser(name, updatedUser)
+	err := ab.service.UpdateUser(name, updatedUser)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	return &pb.UpdateUserResponse{
-		Response: "user was successfully updated",
+		Response:    "user was successfully updated",
+		UpdatedUser: in.GetUpdatedUser(),
 	}, nil
 }
 
