@@ -1,222 +1,173 @@
-package service
+package service_test
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/stretchr/testify/assert"
-	"github.com/vstarostin/infoblox-training-project-1/internal/pb"
+	"github.com/stretchr/testify/suite"
+	"github.com/vstarostin/infoblox-training-project-1/internal/model"
+	"github.com/vstarostin/infoblox-training-project-1/internal/service"
+	"gorm.io/gorm"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/vstarostin/infoblox-training-project-1/internal/mock"
 )
 
 var (
-	UserName   = "name"
-	Phone      = "phone"
-	Address    = "address"
-	NewName    = "newname"
-	NewPhone   = "newphone"
-	NewAddress = "newaddress"
-	User       = &pb.User{UserName: UserName, Phone: Phone, Address: Address}
+	name, phone, address = "name", "phone", "address"
+	user                 = model.User{Name: name, Phone: phone, Address: address}
+	users                = []model.User{user}
+	emptyUsers           = []model.User{}
 )
 
-func TestAddUser(t *testing.T) {
-	ctx := context.Background()
-	addressBook := New()
-	user := User
+type serviceTestSuite struct {
+	suite.Suite
+	service *service.AddressBookService
+	storage *mock.AddressBookStorage
+}
 
-	expectedResponse_without_error := &pb.AddUserResponse{Response: AddUserMethodResponse}
-	addUserRequest := &pb.AddUserRequest{
-		NewUser: user,
-	}
+func (suite *serviceTestSuite) SetupTest() {
+	storage := &mock.AddressBookStorage{}
+	s := service.New(storage)
+	suite.storage = storage
+	suite.service = s
+}
 
+func TestService(t *testing.T) {
+	suite.Run(t, new(serviceTestSuite))
+}
+
+func (suite *serviceTestSuite) TestServiceAddUser() {
 	tests := map[string]struct {
-		expectedResponse *pb.AddUserResponse
-		expectedErr      error
+		storageResponse *gorm.DB
+		expectedResult  error
 	}{
 		"without_error": {
-			expectedResponse: expectedResponse_without_error,
-			expectedErr:      nil,
+			storageResponse: &gorm.DB{},
+			expectedResult:  nil,
 		},
 		"error": {
-			expectedResponse: nil,
-			expectedErr:      status.Errorf(codes.AlreadyExists, ErrUserAlreadyExist, addUserRequest.GetNewUser().GetUserName())},
+			storageResponse: &gorm.DB{Error: errors.New("some error")},
+			expectedResult:  fmt.Errorf(service.ErrUserAlreadyExist, phone),
+		},
 	}
 
 	for name, test := range tests {
-		switch name {
-		case "error":
-			addressBook.data[user.GetUserName()] = user
-		default:
-			delete(addressBook.data, user.GetUserName())
-		}
-		t.Run(name, func(t *testing.T) {
-			gotResponse, err := addressBook.AddUser(ctx, addUserRequest)
-			assert.Equal(t, test.expectedErr, err)
-			assert.Equal(t, test.expectedResponse, gotResponse)
+		suite.Run(name, func() {
+			suite.storage.On("Store", user).Once().Return(test.storageResponse)
+			gotResult := suite.service.AddUser(user.Name, user.Phone, user.Address)
+			suite.Equal(test.expectedResult, gotResult)
 		})
 	}
 }
 
-func TestFindUser(t *testing.T) {
-	ctx := context.Background()
-	addressBook := New()
-	user := User
-
-	findUserRequest := &pb.FindUserRequest{UserName: UserName}
-	expectedResponse_without_error := &pb.FindUserResponse{Users: []*pb.User{user}}
-
+func (suite *serviceTestSuite) TestServiceListUsers() {
+	name := "%"
 	tests := map[string]struct {
-		expectedResponse *pb.FindUserResponse
-		expectedErr      error
+		storageResponse, expectedResult []model.User
 	}{
 		"without_error": {
-			expectedResponse: expectedResponse_without_error,
-			expectedErr:      nil,
+			storageResponse: users,
+			expectedResult:  users,
 		},
 		"error": {
-			expectedResponse: nil,
-			expectedErr:      status.Errorf(codes.InvalidArgument, ErrNoSuchUser, findUserRequest.GetUserName()),
+			storageResponse: emptyUsers,
+			expectedResult:  emptyUsers,
 		},
 	}
 
-	for name, test := range tests {
-		switch name {
-		case "error":
-			delete(addressBook.data, user.GetUserName())
-		default:
-			addressBook.data[user.GetUserName()] = user
-		}
-		t.Run(name, func(t *testing.T) {
-			gotResponse, err := addressBook.FindUser(ctx, findUserRequest)
-			assert.Equal(t, test.expectedErr, err)
-			assert.Equal(t, test.expectedResponse, gotResponse)
-		})
-
-	}
-}
-
-func TestListUsers(t *testing.T) {
-	ctx := context.Background()
-	addressBook := New()
-	user := User
-
-	expectedErr := status.Error(codes.NotFound, ErrAddressBookIsEmpty)
-	expectedResponse_without_error := &pb.ListUsersResponse{
-		Users: []*pb.User{user},
-	}
-
-	tests := map[string]struct {
-		expectedResponse *pb.ListUsersResponse
-		expectedErr      error
-	}{
-		"without_error": {
-			expectedResponse: expectedResponse_without_error,
-			expectedErr:      nil,
-		},
-		"error": {
-			expectedResponse: nil,
-			expectedErr:      expectedErr,
-		},
-	}
-	for name, test := range tests {
-		switch name {
-		case "error":
-			delete(addressBook.data, user.GetUserName())
-		default:
-			addressBook.data[user.GetUserName()] = user
-		}
-		t.Run(name, func(t *testing.T) {
-			gotListUsersResponse, err := addressBook.ListUsers(ctx, &empty.Empty{})
-			assert.Equal(t, test.expectedErr, err)
-			assert.Equal(t, test.expectedResponse, gotListUsersResponse)
+	for caseName, test := range tests {
+		suite.Run(caseName, func() {
+			suite.storage.On("LoadByName", name).Once().Return(test.storageResponse)
+			gotResult, _ := suite.service.ListUsers()
+			suite.Equal(test.expectedResult, gotResult)
 		})
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
-	ctx := context.Background()
-	addressBook := New()
-	user := User
-
-	deleteUserRequest := &pb.DeleteUserRequest{UserName: UserName}
-	expectedResponse_without_error := &pb.DeleteUserResponse{
-		Response: fmt.Sprintf(DeleteUserMethodResponse, 1),
-	}
-	expectedErr := status.Errorf(codes.InvalidArgument, ErrNoSuchUser, deleteUserRequest.GetUserName())
-
+func (suite *serviceTestSuite) TestServiceFindUser() {
 	tests := map[string]struct {
-		expectedResponse *pb.DeleteUserResponse
-		expectedErr      error
+		users, storageResponse, expectedResult []model.User
+		expectedErr                            error
 	}{
 		"without_error": {
-			expectedResponse: expectedResponse_without_error,
-			expectedErr:      nil,
+			users:           users,
+			storageResponse: users,
+			expectedResult:  users,
+			expectedErr:     nil,
 		},
 		"error": {
-			expectedResponse: nil,
-			expectedErr:      expectedErr,
+			users:           emptyUsers,
+			storageResponse: emptyUsers,
+			expectedResult:  emptyUsers,
+			expectedErr:     fmt.Errorf(service.ErrNoSuchUserWithName, name),
 		},
 	}
-	for name, test := range tests {
-		switch name {
-		case "error":
-			delete(addressBook.data, user.GetUserName())
-		default:
-			addressBook.data[user.GetUserName()] = user
-		}
-		t.Run(name, func(t *testing.T) {
-			gotResponse, err := addressBook.DeleteUser(ctx, deleteUserRequest)
-			assert.Equal(t, test.expectedErr, err)
-			assert.Equal(t, test.expectedResponse, gotResponse)
+	for caseName, test := range tests {
+		suite.Run(caseName, func() {
+			suite.storage.On("LoadByName", name).Once().Return(test.users)
+			gotResult, err := suite.service.FindUser(name)
+			suite.Equal(test.expectedResult, gotResult)
+			suite.Equal(test.expectedErr, err)
 		})
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
-	ctx := context.Background()
-	addressBook := New()
-	user := User
-
-	updatedUser := &pb.User{UserName: NewName, Phone: NewPhone, Address: NewAddress}
-	updateUserRequest := &pb.UpdateUserRequest{
-		UserName:    user.GetUserName(),
-		UpdatedUser: updatedUser,
-	}
-
-	expectedResponse_without_error := &pb.UpdateUserResponse{
-		Response: UpdateUserMethodResponse,
-	}
-	expectedErr := status.Errorf(codes.InvalidArgument, ErrNoSuchUser, updateUserRequest.GetUserName())
-
+func (suite *serviceTestSuite) TestServiceDeleteUser() {
 	tests := map[string]struct {
-		expectedResponse *pb.UpdateUserResponse
-		expectedErr      error
+		storageResponse *gorm.DB
+		expectedResult  string
+		expectedErr     error
 	}{
 		"without_error": {
-			expectedResponse: expectedResponse_without_error,
-			expectedErr:      nil,
+			storageResponse: &gorm.DB{RowsAffected: 1},
+			expectedResult:  fmt.Sprintf(service.DeleteUserMethodResponse, 1),
+			expectedErr:     nil,
 		},
 		"error": {
-			expectedResponse: nil,
-			expectedErr:      expectedErr,
+			storageResponse: &gorm.DB{RowsAffected: 0},
+			expectedResult:  "",
+			expectedErr:     fmt.Errorf(service.ErrNoSuchUserWithName, name),
 		},
 	}
+	for caseName, test := range tests {
+		suite.Run(caseName, func() {
+			suite.storage.On("Delete", name).Once().Return(test.storageResponse)
+			gotResult, err := suite.service.DeleteUser(name)
+			suite.Equal(test.expectedResult, gotResult)
+			suite.Equal(test.expectedErr, err)
+		})
+	}
+}
 
-	for name, test := range tests {
-		switch name {
-		case "error":
-			delete(addressBook.data, user.GetUserName())
-		default:
-			addressBook.data[user.GetUserName()] = user
-		}
-		t.Run(name, func(t *testing.T) {
-			gotResponse, err := addressBook.UpdateUser(ctx, updateUserRequest)
-			assert.Equal(t, test.expectedErr, err)
-			assert.Equal(t, test.expectedResponse.GetResponse(), gotResponse.GetResponse())
+func (suite *serviceTestSuite) TestServiceUpdateUser() {
+	tests := map[string]struct {
+		users           []model.User
+		storageResponse *gorm.DB
+		expectedErr     error
+	}{
+		"without_error": {
+			users:           users,
+			storageResponse: &gorm.DB{},
+			expectedErr:     nil,
+		},
+		"error_1": {
+			users:           users,
+			storageResponse: &gorm.DB{Error: fmt.Errorf("some error")},
+			expectedErr:     fmt.Errorf(service.ErrPhoneIsTaken, user.Phone),
+		},
+		"error_2": {
+			users:           []model.User{},
+			storageResponse: &gorm.DB{Error: fmt.Errorf("some error")},
+			expectedErr:     fmt.Errorf(service.ErrNoSuchUserWithPhone, user.Phone),
+		},
+	}
+	for caseName, test := range tests {
+		suite.Run(caseName, func() {
+			suite.storage.On("LoadByPhone", phone).Once().Return(test.users)
+			suite.storage.On("Update", phone, user).Once().Return(test.storageResponse)
+			err := suite.service.UpdateUser(phone, user)
+			suite.Equal(test.expectedErr, err)
 		})
 	}
 }

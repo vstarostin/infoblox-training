@@ -48,5 +48,10 @@ run-service:
 .PHONY: docker-stop
 docker-stop:
 	@docker stop address-book-service
+
+.PHONY: gen-mocks
+gen-mocks:
+	@docker run -v `pwd`:/src -w /src vektra/mockery:v2.7 --case snake --dir internal --output internal/mock --outpkg mock --all
+
 		
 		

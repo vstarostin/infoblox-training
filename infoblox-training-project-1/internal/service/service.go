@@ -18,7 +18,7 @@ const (
 	ErrPhoneIsTaken          = "phone %v is already taken. Please write a correct one"
 )
 
-type AddressBookService struct {
+type AddressBookService struct { 
 	storage AddressBookStorage
 }
 
@@ -27,7 +27,7 @@ func New(storage AddressBookStorage) *AddressBookService {
 		storage: storage,
 	}
 }
-
+ 
 type AddressBookStorage interface {
 	LoadByName(name string) []model.User
 	LoadByPhone(phone string) []model.User
