@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/vstarostin/infoblox-training-project-1/internal/model"
-	"github.com/vstarostin/infoblox-training-project-1/internal/service"
 	"gorm.io/gorm"
 
 	"github.com/vstarostin/infoblox-training-project-1/internal/mock"
+	"github.com/vstarostin/infoblox-training-project-1/internal/model"
+	"github.com/vstarostin/infoblox-training-project-1/internal/service"
 )
 
 var (
