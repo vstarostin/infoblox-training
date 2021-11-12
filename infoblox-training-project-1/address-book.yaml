@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: address-book
+  labels:
+    app: address-book
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: address-book
+  template:
+    metadata:
+      labels:
+        app: address-book
+    spec:
+      containers:
+      - name: address-book
+        image: 542011/address-book-service
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_CONNECTION_STRING
+          value: postgresql://postgres:password@db/postgres?sslmode=disable
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: address-book
+spec:
+  selector:
+    app: address-book
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30000
