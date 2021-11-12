@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db
+  name: postgres
 spec:
   selector:
    matchLabels:
-    app: db
+    app: postgres
   replicas: 1
   template:
     metadata:
       labels:
-        app: db
+        app: postgres
     spec:
       containers:
-        - name: db
+        - name: postgres
           image: postgres:latest
           env:
           - name: POSTGRES_DB
@@ -26,12 +26,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: db
+  name: postgres-service
   labels:
-    app: db
+    app: postgres
 spec:
   selector:
-    app: db
+    app: postgres
   type: LoadBalancer  
   ports:
     - protocol: TCP
