@@ -4,8 +4,10 @@ services:
   server:
     build: .
     container_name: address-book-service
+    volumes:
+      - ./secret:/secret
     environment: 
-      DB_CONNECTION_STRING: $DB_CONN
+      DB_CONNECTION_STRING: /secret/.db_conn
     ports:
       - 8080:8080
     depends_on:
@@ -18,3 +20,5 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: postgres
+
+
