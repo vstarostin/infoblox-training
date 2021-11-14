@@ -53,5 +53,21 @@ docker-stop:
 gen-mocks:
 	@docker run -v `pwd`:/src -w /src vektra/mockery:v2.7 --case snake --dir internal --output internal/mock --outpkg mock --all
 
-		
+.PHONY: compose-up	
+compose-up:
+	@docker-compose up -d 
+
+.PHONY: compose-down	
+compose-down:
+	@docker-compose down
+
+.PHONY: compose-start	
+compose-start:
+	@docker-compose start
+
+.PHONY: compose-stop
+compose-stop:
+	@docker-compose stop
+
+
 		
