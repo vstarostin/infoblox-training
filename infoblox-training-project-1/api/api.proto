@@ -14,7 +14,7 @@ service AddressBookService {
     };
     rpc FindUser(FindUserRequest) returns (FindUserResponse) {
         option (google.api.http) = {
-            get: "/find/{userName}"
+            get: "/find"
         };
     };
     rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
@@ -29,7 +29,7 @@ service AddressBookService {
     };
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
         option (google.api.http) = {
-            post: "/update/{userName}"
+            post: "/update/{phone}"
             body: "*"
         };
     };
@@ -43,7 +43,7 @@ message User {
 
 message UpdateUserRequest {
     User updatedUser = 1;
-    string userName = 2;
+    string phone = 2;
 }
 
 message UpdateUserResponse {
@@ -60,7 +60,9 @@ message AddUserResponse {
 }
 
 message FindUserRequest {
-    string userName = 1;
+    string name = 1;
+    string phone = 2;
+    string address = 3;
 }
 
 message FindUserResponse {    
