@@ -15,7 +15,7 @@ import (
 const (
 	AddUserMethodResponse    = "successfully added"
 	UpdateUserMethodResponse = "user was successfully updated"
-	ErrUpdateUserMethod      = "method UpdateUser does not support wildcards"
+	ErrUpdateUserMethod      = "please provide full phone number, address or name"
 )
 
 type AddressBook struct {
