@@ -3,7 +3,6 @@ module github.com/vstarostin/infoblox-training-project-1
 go 1.17
 
 require (
-	github.com/caarlos0/env/v6 v6.7.2
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/stretchr/testify v1.7.0

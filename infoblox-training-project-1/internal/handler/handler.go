@@ -27,7 +27,7 @@ type AddressBookService interface {
 	AddUser(name, phone, address string) error
 	ListUsers() ([]model.User, error)
 	DeleteUser(name string) (string, error)
-	FindUser(name string) ([]model.User, error)
+	FindUser(name, phone, address string) ([]model.User, error)
 	UpdateUser(phone string, updatedUser model.User) error
 }
 
@@ -78,8 +78,11 @@ func (ab *AddressBook) DeleteUser(_ context.Context, in *pb.DeleteUserRequest) (
 }
 
 func (ab *AddressBook) FindUser(_ context.Context, in *pb.FindUserRequest) (*pb.FindUserResponse, error) {
-	name := format(in.GetUserName())
-	usersFromDB, err := ab.service.FindUser(name)
+	name := format(in.GetName())
+	phone := format(in.GetPhone())
+	address := format(in.GetAddress())
+
+	usersFromDB, err := ab.service.FindUser(name, phone, address)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

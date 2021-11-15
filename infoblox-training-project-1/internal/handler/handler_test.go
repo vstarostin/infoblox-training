@@ -153,8 +153,8 @@ func (suite *handlerTestSuite) TestHandlerFindUser() {
 	}
 	for testCase, test := range tests {
 		suite.Run(testCase, func() {
-			suite.service.On("FindUser", name).Once().Return(test.serviceResponse, test.serviceErr)
-			gotResponse, err := suite.handler.FindUser(context.Background(), &pb.FindUserRequest{UserName: name})
+			suite.service.On("FindUser", name, "", "").Once().Return(test.serviceResponse, test.serviceErr)
+			gotResponse, err := suite.handler.FindUser(context.Background(), &pb.FindUserRequest{Name: name})
 			suite.Equal(test.expectedResponse, gotResponse)
 			suite.Equal(test.expectedErr, err)
 		})

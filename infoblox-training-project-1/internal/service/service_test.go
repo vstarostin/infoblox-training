@@ -62,7 +62,8 @@ func (suite *serviceTestSuite) TestServiceAddUser() {
 }
 
 func (suite *serviceTestSuite) TestServiceListUsers() {
-	name := "%"
+	name, address, phone := "%", "%", "%"
+	user := model.User{Name: name, Phone: phone, Address: address}
 	tests := map[string]struct {
 		storageResponse, expectedResult []model.User
 	}{
@@ -78,7 +79,7 @@ func (suite *serviceTestSuite) TestServiceListUsers() {
 
 	for caseName, test := range tests {
 		suite.Run(caseName, func() {
-			suite.storage.On("LoadByName", name).Once().Return(test.storageResponse)
+			suite.storage.On("Load", user).Once().Return(test.storageResponse)
 			gotResult, _ := suite.service.ListUsers()
 			suite.Equal(test.expectedResult, gotResult)
 		})
@@ -100,13 +101,13 @@ func (suite *serviceTestSuite) TestServiceFindUser() {
 			users:           emptyUsers,
 			storageResponse: emptyUsers,
 			expectedResult:  emptyUsers,
-			expectedErr:     fmt.Errorf(service.ErrNoSuchUserWithName, name),
+			expectedErr:     fmt.Errorf(service.ErrUserDoesNotExist),
 		},
 	}
 	for caseName, test := range tests {
 		suite.Run(caseName, func() {
-			suite.storage.On("LoadByName", name).Once().Return(test.users)
-			gotResult, err := suite.service.FindUser(name)
+			suite.storage.On("Load", user).Once().Return(test.users)
+			gotResult, err := suite.service.FindUser(name, phone, address)
 			suite.Equal(test.expectedResult, gotResult)
 			suite.Equal(test.expectedErr, err)
 		})
@@ -141,6 +142,7 @@ func (suite *serviceTestSuite) TestServiceDeleteUser() {
 }
 
 func (suite *serviceTestSuite) TestServiceUpdateUser() {
+	u := model.User{Name: "%", Phone: phone, Address: "%"}
 	tests := map[string]struct {
 		users           []model.User
 		storageResponse *gorm.DB
@@ -154,20 +156,23 @@ func (suite *serviceTestSuite) TestServiceUpdateUser() {
 		"error_1": {
 			users:           users,
 			storageResponse: &gorm.DB{Error: fmt.Errorf("some error")},
-			expectedErr:     fmt.Errorf(service.ErrPhoneIsTaken, user.Phone),
-		},
-		"error_2": {
-			users:           []model.User{},
-			storageResponse: &gorm.DB{Error: fmt.Errorf("some error")},
-			expectedErr:     fmt.Errorf(service.ErrNoSuchUserWithPhone, user.Phone),
+			expectedErr:     fmt.Errorf(service.ErrPhoneIsTaken, phone),
 		},
 	}
 	for caseName, test := range tests {
 		suite.Run(caseName, func() {
-			suite.storage.On("LoadByPhone", phone).Once().Return(test.users)
+			suite.storage.On("Load", u).Once().Return(test.users)
 			suite.storage.On("Update", phone, user).Once().Return(test.storageResponse)
-			err := suite.service.UpdateUser(phone, user)
+			err := suite.service.UpdateUser(u.Phone, user)
 			suite.Equal(test.expectedErr, err)
 		})
 	}
+}
+
+func (suite *serviceTestSuite) TestServiceUpdateUserError() {
+	u := model.User{Name: "%", Phone: phone, Address: "%"}
+	expectedErr := fmt.Errorf(service.ErrUserDoesNotExist)
+	suite.storage.On("Load", u).Once().Return(emptyUsers)
+	err := suite.service.UpdateUser(u.Phone, user)
+	suite.Equal(expectedErr, err)
 }

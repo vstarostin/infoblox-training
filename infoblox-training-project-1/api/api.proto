@@ -14,7 +14,7 @@ service AddressBookService {
     };
     rpc FindUser(FindUserRequest) returns (FindUserResponse) {
         option (google.api.http) = {
-            get: "/find/{userName}"
+            get: "/find"
         };
     };
     rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
@@ -60,7 +60,9 @@ message AddUserResponse {
 }
 
 message FindUserRequest {
-    string userName = 1;
+    string name = 1;
+    string phone = 2;
+    string address = 3;
 }
 
 message FindUserResponse {    

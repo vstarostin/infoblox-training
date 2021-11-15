@@ -18,15 +18,9 @@ func (s *Storage) Store(user model.User) *gorm.DB {
 	return s.db.Select("name", "phone", "address").Create(&user)
 }
 
-func (s *Storage) LoadByPhone(phone string) []model.User {
+func (s *Storage) Load(u model.User) []model.User {
 	user := []model.User{}
-	s.db.Where("phone LIKE ?", phone).Find(&user)
-	return user
-}
-
-func (s *Storage) LoadByName(name string) []model.User {
-	user := []model.User{}
-	s.db.Where("name LIKE ?", name).Find(&user)
+	s.db.Where("name LIKE ? AND phone LIKE ? AND address LIKE ?", u.Name, u.Phone, u.Address).Find(&user)
 	return user
 }
 
