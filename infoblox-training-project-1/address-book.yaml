@@ -19,9 +19,6 @@ spec:
         image: 542011/address-book-service
         ports:
         - containerPort: 8080
-        env:
-        - name: DB_CONNECTION_STRING
-          value: postgresql://postgres:password@postgres-service/postgres?sslmode=disable
 ---
 apiVersion: v1
 kind: Service

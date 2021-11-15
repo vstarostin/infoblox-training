@@ -16,7 +16,7 @@ func NewConfig() *Config {
 	gRPCPort := flag.Int("grpcport", 9090, "GRPC server port")
 	username := flag.String("username", "postgres", "database user")
 	password := flag.String("password", "password", "database password")
-	host := flag.String("host", "localhost", "database host")
+	host := flag.String("host", "postgres-service", "database host")
 	dbPort := flag.Int("dbport", 5432, "database port")
 	dbName := flag.String("dbname", "postgres", "database name")
 	flag.Parse()
