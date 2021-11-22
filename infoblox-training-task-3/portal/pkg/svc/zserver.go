@@ -68,36 +68,34 @@ func (s *server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse,
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	s.requests++
-
+	var response string
 	if in.GetService() == "portal" {
 		switch in.GetCommand() {
 		case "info":
-			description := s.GetDescr(in.Value)
-			return &pb.GetResponse{Service: in.GetService(), Response: description}, nil
+			response = s.GetDescription(in.Value)
 		case "uptime":
-			uptime := s.GetUpt()
-			return &pb.GetResponse{Service: in.GetService(), Response: uptime}, nil
+			response = s.GetUptime()
 		case "requests":
-			requests := s.GetRequests()
-			return &pb.GetResponse{Service: in.GetService(), Response: requests}, nil
+			response = s.GetRequests()
 		case "time":
-			time := s.GetTime()
-			return &pb.GetResponse{Service: in.GetService(), Response: time}, nil
+			response = s.GetTime()
 		case "reset":
-			status := s.Reset()
-			return &pb.GetResponse{Service: in.GetService(), Response: status}, nil
+			response = s.Reset()
 		default:
 			return nil, status.Error(codes.InvalidArgument, "please provide commands: info, uptime, requests or reset")
 		}
+		return &pb.GetResponse{Service: in.GetService(), Response: response}, nil
+
 	}
 	if in.GetService() == "storage" && in.GetCommand() == "mode" {
 		return nil, status.Error(codes.InvalidArgument, "please provide commands: info, uptime, requests or reset")
 	}
 
 	if in.GetService() == "responder" || in.GetService() == "storage" {
-		conn, err := grpc.Dial("127.0.0.1:9095", grpc.WithInsecure())
+		// conn, err := grpc.Dial("0.0.0.1:9095", grpc.WithInsecure())
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("responder.port")), grpc.WithInsecure())
 		if err != nil {
-			s.Logger.Fatalf("Failed to dial %s: %v", "127.0.0.1:9095", err)
+			s.Logger.Fatalf("Failed to dial %s: %v", fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("responder.port")), err)
 		}
 		defer conn.Close()
 		c := NewResponderClient(conn)
@@ -119,7 +117,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 	return nil, status.Error(codes.InvalidArgument, "err")
 }
 
-func (s *server) GetDescr(value string) string {
+func (s *server) GetDescription(value string) string {
 	if value == "" {
 		return s.description
 	}
@@ -127,7 +125,7 @@ func (s *server) GetDescr(value string) string {
 	return s.description
 }
 
-func (s *server) GetUpt() string {
+func (s *server) GetUptime() string {
 	uptime := time.Since(s.startTime)
 	return uptime.String()
 }

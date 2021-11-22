@@ -76,9 +76,9 @@ type GetRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Command string `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
-	Value   string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	Service string `protobuf:"bytes,3,opt,name=service,proto3" json:"service,omitempty"`
+	Command string `protobuf:"bytes,1,opt,name=command,proto3" json:"command"`
+	Value   string `protobuf:"bytes,2,opt,name=value,proto3" json:"value"`
+	Service string `protobuf:"bytes,3,opt,name=service,proto3" json:"service"`
 }
 
 func (x *GetRequest) Reset() {
