@@ -18,7 +18,8 @@ import (
 
 const (
 	// version is the current version of the service
-	version = "0.0.1"
+	version           = "0.0.1"
+	modeFalseResponse = "service is temporarily disabled"
 )
 
 // Default implementation of the Responder server interface
@@ -38,32 +39,30 @@ func (s *server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse,
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	s.requests++
+	var response string
 	if in.GetService() == "responder" {
 		switch in.GetCommand() {
 		case "info":
-			description := s.GetDescription(in.Value)
-			return &pb.GetResponse{Service: in.GetService(), Response: description}, nil
+			response = s.GetDescription(in.Value)
 		case "uptime":
-			uptime := s.GetUptime()
-			return &pb.GetResponse{Service: in.GetService(), Response: uptime}, nil
+			response = s.GetUptime()
 		case "requests":
-			requests := s.GetRequestsCount()
-			return &pb.GetResponse{Service: in.GetService(), Response: requests}, nil
+			response = s.GetRequestsCount()
 		case "mode":
 			value, err := s.GetMode(in.Value)
 			if err != nil {
 				return nil, status.Error(codes.Unknown, "err")
 			}
-			return &pb.GetResponse{Service: in.GetService(), Response: strconv.FormatBool(value)}, nil
+			response = strconv.FormatBool(value)
 		case "time":
-			time := s.GetTime()
-			return &pb.GetResponse{Service: in.GetService(), Response: time}, nil
+			response = s.GetTime()
 		case "reset":
-			status := s.Reset()
-			return &pb.GetResponse{Service: in.GetService(), Response: status}, nil
+			response = s.Reset()
 		default:
 			return nil, status.Error(codes.InvalidArgument, "please provide commands: info, uptime, requests or reset")
 		}
+		return &pb.GetResponse{Service: in.GetService(), Response: response}, nil
+
 	}
 
 	if in.GetService() == "storage" && s.mode {
@@ -76,10 +75,15 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 			return nil, status.Error(codes.Unknown, "error")
 		}
 		time.Sleep(10 * time.Millisecond)
-		return &pb.GetResponse{Service: in.GetService(), Response: string(s.pubsub.IncomingData)}, nil
+		incomingData := struct{ Response, Service string }{"", ""}
+		err = json.Unmarshal(s.pubsub.IncomingData, &incomingData)
+		if err != nil {
+			return nil, status.Error(codes.Unknown, "err")
+		}
+		return &pb.GetResponse{Service: in.GetService(), Response: incomingData.Response}, nil
 	}
 
-	return nil, status.Error(codes.Unknown, "service is temporarily disabled")
+	return nil, status.Error(codes.Unknown, modeFalseResponse)
 }
 
 func (s *server) GetDescription(value string) string {
@@ -95,7 +99,7 @@ func (s *server) GetUptime() string {
 		uptime := time.Since(s.startTime)
 		return uptime.String()
 	}
-	return "service is temporarily disabled"
+	return modeFalseResponse
 }
 
 func (s *server) GetRequestsCount() string {
