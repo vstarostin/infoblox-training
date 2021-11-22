@@ -73,10 +73,12 @@ const (
 
 	// Dapr
 	defaultDaprPubsubName     = "pubsub"
-	defaultDaprGrpcPort       = 50001
+	defaultDaprGrpcPort       = 50002
 	defaultDaprPublishTopic   = "publish"
 	defaultDaprAppPort        = 1250
 	defaultDaprSubscribeTopic = "subscribe"
+
+	defaultRequestsCount = 0
 )
 
 var (
@@ -140,4 +142,6 @@ var (
 	flagKeepaliveTimeout = pflag.Int("config.keepalive.timeout", defaultKeepaliveTimeout, "default value, in seconds, of the keepalive timeout")
 
 	flagLoggingLevel = pflag.String("logging.level", defaultLoggingLevel, "log level of application")
+
+	flagRequestsCount = pflag.Int64("app.requests", defaultRequestsCount, "requests count")
 )

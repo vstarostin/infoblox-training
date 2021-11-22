@@ -2,13 +2,16 @@ package dapr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
-	daprpb "github.com/dapr/go-sdk/dapr/proto/runtime/v1"
+	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/dapr/go-sdk/service/common"
 	daprd "github.com/dapr/go-sdk/service/grpc"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -17,6 +20,10 @@ type PubSub struct {
 	Logger         *logrus.Logger
 	TopicSubscribe string
 	Name           string
+	description    string
+	startTime      time.Time
+	incomingData   []byte
+	requests       int64
 }
 
 func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger) (*PubSub, error) {
@@ -26,6 +33,10 @@ func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log 
 		Logger:         log,
 		TopicSubscribe: topic,
 		Name:           pubsubName,
+		description:    viper.GetString("app.id"),
+		incomingData:   make([]byte, 0),
+		startTime:      time.Now(),
+		requests:       0,
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -78,8 +89,38 @@ func (p *PubSub) initSubscriber(appPort int) {
 
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
-
-	return false, nil
+	p.requests++
+	b, ok := e.Data.([]byte)
+	if !ok {
+		return false, err
+	}
+	in := struct {
+		Command, Value, Service string
+	}{
+		"", "", "",
+	}
+	err = json.Unmarshal(b, &in)
+	if err != nil {
+		return false, err
+	}
+	switch in.Command {
+	case "info":
+		description := p.GetDescription(in.Value)
+		p.Publish(viper.GetString("dapr.publish.topic"), []byte(description))
+	case "uptime":
+		uptime := p.GetUptime()
+		p.Publish(viper.GetString("dapr.publish.topic"), []byte(uptime))
+	case "requests":
+		requests := p.GetRequestsCount()
+		p.Publish(viper.GetString("dapr.publish.topic"), []byte(requests))
+	case "time":
+		time := p.GetTime()
+		p.Publish(viper.GetString("dapr.publish.topic"), []byte(time))
+	case "reset":
+		status := p.Reset()
+		p.Publish(viper.GetString("dapr.publish.topic"), []byte(status))
+	}
+	return false, err
 }
 
 func (p *PubSub) Publish(topic string, msg []byte) error {
@@ -93,4 +134,32 @@ func (p *PubSub) Publish(topic string, msg []byte) error {
 		PubsubName: p.Name,
 	})
 	return err
+}
+
+func (p *PubSub) GetDescription(value string) string {
+	if value == "" {
+		return p.description
+	}
+	p.description = value
+	return p.description
+}
+
+func (p *PubSub) GetUptime() string {
+	uptime := time.Since(p.startTime)
+	return uptime.String()
+}
+
+func (p *PubSub) GetRequestsCount() string {
+	return string(rune(p.requests))
+}
+
+func (p *PubSub) GetTime() string {
+	return time.Now().String()
+}
+
+func (p *PubSub) Reset() string {
+	p.description = viper.GetString("app.id")
+	p.requests = viper.GetInt64("app.requests")
+	p.startTime = time.Now()
+	return "service restarted"
 }
