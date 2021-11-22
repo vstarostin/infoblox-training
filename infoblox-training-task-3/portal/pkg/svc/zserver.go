@@ -29,31 +29,31 @@ type server struct {
 	requests    int64
 }
 
-type PortalClient interface {
+type ResponderClient interface {
 	GetVersion(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*pb.VersionResponse, error)
 	Get(ctx context.Context, in *pb.GetRequest, opts ...grpc.CallOption) (*pb.GetResponse, error)
 }
 
-type portalClient struct {
+type responderClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPortalClient(cc grpc.ClientConnInterface) PortalClient {
-	return &portalClient{cc}
+func NewResponderClient(cc grpc.ClientConnInterface) ResponderClient {
+	return &responderClient{cc}
 }
 
-func (c *portalClient) GetVersion(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*pb.VersionResponse, error) {
+func (c *responderClient) GetVersion(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*pb.VersionResponse, error) {
 	out := new(pb.VersionResponse)
-	err := c.cc.Invoke(ctx, "/portal.Portal/GetVersion", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/responder.Responder/GetVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *portalClient) Get(ctx context.Context, in *pb.GetRequest, opts ...grpc.CallOption) (*pb.GetResponse, error) {
+func (c *responderClient) Get(ctx context.Context, in *pb.GetRequest, opts ...grpc.CallOption) (*pb.GetResponse, error) {
 	out := new(pb.GetResponse)
-	err := c.cc.Invoke(ctx, "/portal.Portal/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/responder.Responder/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 			s.Logger.Fatalf("Failed to dial %s: %v", "127.0.0.1:9095", err)
 		}
 		defer conn.Close()
-		c := NewPortalClient(conn)
+		c := NewResponderClient(conn)
 		res, err := c.Get(context.Background(), &pb.GetRequest{
 			Value:   in.GetValue(),
 			Command: in.GetCommand(),
