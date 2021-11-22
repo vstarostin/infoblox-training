@@ -27,6 +27,7 @@ func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log 
 		Logger:         log,
 		TopicSubscribe: topic,
 		Name:           pubsubName,
+		IncomingData:   make([]byte, 0),
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -79,7 +80,7 @@ func (p *PubSub) initSubscriber(appPort int) {
 
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
-
+	p.IncomingData = e.Data.([]byte)
 	return false, nil
 }
 

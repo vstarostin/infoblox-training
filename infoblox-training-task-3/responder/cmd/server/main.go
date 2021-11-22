@@ -22,7 +22,7 @@ import (
 func main() {
 	doneC := make(chan error)
 	logger := NewLogger()
-	pubsub, err := dapr.InitPubsub(viper.GetString("dapr.subscribe.topic"), viper.GetString("dapr.pubsub.name"), viper.GetInt("dapr.appPort"), viper.GetInt("dapr.grpcport"), logger)
+	pubsub, err := dapr.InitPubsub(viper.GetString("dapr.publish.topic"), viper.GetString("dapr.pubsub.name"), viper.GetInt("dapr.appPort"), viper.GetInt("dapr.grpcport"), logger)
 	if err != nil {
 		logger.Fatalf("Cannot initialize pubsub: %v", err)
 	}

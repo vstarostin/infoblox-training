@@ -41,13 +41,13 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 	if in.GetService() == "responder" {
 		switch in.GetCommand() {
 		case "info":
-			description := s.GetDescr(in.Value)
+			description := s.GetDescription(in.Value)
 			return &pb.GetResponse{Service: in.GetService(), Response: description}, nil
 		case "uptime":
-			uptime := s.GetUpt()
+			uptime := s.GetUptime()
 			return &pb.GetResponse{Service: in.GetService(), Response: uptime}, nil
 		case "requests":
-			requests := s.GetRequests()
+			requests := s.GetRequestsCount()
 			return &pb.GetResponse{Service: in.GetService(), Response: requests}, nil
 		case "mode":
 			value, err := s.GetMode(in.Value)
@@ -71,7 +71,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		if err != nil {
 			return nil, status.Error(codes.Unknown, "err")
 		}
-		err = s.pubsub.Publish("topic3", b)
+		err = s.pubsub.Publish(viper.GetString("dapr.subscribe.topic"), b)
 		if err != nil {
 			return nil, status.Error(codes.Unknown, "error")
 		}
@@ -82,7 +82,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 	return nil, status.Error(codes.Unknown, "service is temporarily disabled")
 }
 
-func (s *server) GetDescr(value string) string {
+func (s *server) GetDescription(value string) string {
 	if value == "" {
 		return s.description
 	}
@@ -90,7 +90,7 @@ func (s *server) GetDescr(value string) string {
 	return s.description
 }
 
-func (s *server) GetUpt() string {
+func (s *server) GetUptime() string {
 	if s.mode {
 		uptime := time.Since(s.startTime)
 		return uptime.String()
@@ -98,7 +98,7 @@ func (s *server) GetUpt() string {
 	return "service is temporarily disabled"
 }
 
-func (s *server) GetRequests() string {
+func (s *server) GetRequestsCount() string {
 	return string(rune(s.requests))
 }
 
