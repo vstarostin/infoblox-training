@@ -55,7 +55,7 @@ const (
 	// Health
 	defaultInternalEnable    = true
 	defaultInternalAddress   = "0.0.0.0"
-	defaultInternalPort      = "8085"
+	defaultInternalPort      = "8089"
 	defaultInternalHealth    = "/healthz"
 	defaultInternalReadiness = "/ready"
 
