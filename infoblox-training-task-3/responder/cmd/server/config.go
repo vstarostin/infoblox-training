@@ -7,7 +7,7 @@ const (
 
 	// Server
 	defaultServerAddress = "0.0.0.0"
-	defaultServerPort    = "9090"
+	defaultServerPort    = "9095"
 
 	// Gateway
 	defaultGatewayEnable      = false
@@ -55,7 +55,7 @@ const (
 	// Health
 	defaultInternalEnable    = true
 	defaultInternalAddress   = "0.0.0.0"
-	defaultInternalPort      = "8081"
+	defaultInternalPort      = "8083"
 	defaultInternalHealth    = "/healthz"
 	defaultInternalReadiness = "/ready"
 
@@ -75,8 +75,11 @@ const (
 	defaultDaprPubsubName     = "pubsub"
 	defaultDaprGrpcPort       = 50001
 	defaultDaprPublishTopic   = "publish"
-	defaultDaprAppPort        = 1250
+	defaultDaprAppPort        = 1251
 	defaultDaprSubscribeTopic = "subscribe"
+
+	defaultResponderMode = true
+	defaultRequestsCount = 0
 )
 
 var (
@@ -140,4 +143,7 @@ var (
 	flagKeepaliveTimeout = pflag.Int("config.keepalive.timeout", defaultKeepaliveTimeout, "default value, in seconds, of the keepalive timeout")
 
 	flagLoggingLevel = pflag.String("logging.level", defaultLoggingLevel, "log level of application")
+
+	flagResponderMode = pflag.Bool("app.mode", defaultResponderMode, "mode of application")
+	flagRequestsCount = pflag.Int64("app.requests", defaultRequestsCount, "requests count")
 )

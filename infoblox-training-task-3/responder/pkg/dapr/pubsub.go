@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	daprpb "github.com/dapr/go-sdk/dapr/proto/runtime/v1"
+	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/dapr/go-sdk/service/common"
 	daprd "github.com/dapr/go-sdk/service/grpc"
 	"github.com/sirupsen/logrus"
@@ -17,6 +17,7 @@ type PubSub struct {
 	Logger         *logrus.Logger
 	TopicSubscribe string
 	Name           string
+	IncomingData   []byte
 }
 
 func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger) (*PubSub, error) {

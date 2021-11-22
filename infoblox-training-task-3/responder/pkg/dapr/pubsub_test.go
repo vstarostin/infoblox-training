@@ -3,7 +3,7 @@ package dapr
 import (
 	"testing"
 
-	daprpb "github.com/dapr/go-sdk/dapr/proto/runtime/v1"
+	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/sirupsen/logrus"
 )
 
