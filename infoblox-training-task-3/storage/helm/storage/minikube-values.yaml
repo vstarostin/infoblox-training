@@ -1,0 +1,52 @@
+
+version: latest
+docker:
+  registry: 542011
+  username: "{ Fill this in }"
+  password: "{ Fill this in }"
+
+rbac:
+  enable: true
+
+#### Values that will be populated from env values
+env: "minikube"
+zone: "local"
+
+image:
+  pullPolicy: IfNotPresent
+
+
+db:
+  username: postgres
+  server: "{{ include \"chart.fullname\" . }}-postgres.{{ .Release.Namespace }}"
+  password: postgres
+
+postgres:
+  name: postgres
+  image: postgres
+  version: "10.5"
+  imagePullPolicy: IfNotPresent
+  port: "5432"
+
+
+app:
+  namespace: "storage-{{ .Values.env }}"
+  httpPort: 8080
+  grpcPort: 9090
+
+internal:
+  enable: false
+  port: 8081
+
+secrets:
+  enabled: true
+dapr:
+  enabled: true
+  grpcPort: 50001
+  listenPort: 1250
+  metricsPort: 10090
+  logLevel: info
+  pubsubName: dapr-component
+  topics:
+    publish: topic-publish
+    subscribe: topic-subscribe
