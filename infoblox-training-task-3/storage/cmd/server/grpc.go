@@ -55,7 +55,7 @@ func NewGRPCServer(logger *logrus.Logger, pubsub *dapr.PubSub, dbConnectionStrin
 		return nil, err
 	}
 	// register service implementation with the grpcServer
-	s, err := svc.NewBasicServer(pubsub, db)
+	s, err := svc.NewBasicServer(pubsub, db, viper.GetString("app.id"), time.Now(), 0)
 	if err != nil {
 		return nil, err
 	}

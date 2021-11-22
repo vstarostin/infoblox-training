@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
+	"infoblox-training-task-3/storage/pkg/pb"
 
 	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/dapr/go-sdk/service/common"
@@ -20,10 +20,6 @@ type PubSub struct {
 	Logger         *logrus.Logger
 	TopicSubscribe string
 	Name           string
-	description    string
-	startTime      time.Time
-	incomingData   []byte
-	requests       int64
 }
 
 func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger) (*PubSub, error) {
@@ -33,10 +29,6 @@ func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log 
 		Logger:         log,
 		TopicSubscribe: topic,
 		Name:           pubsubName,
-		description:    viper.GetString("app.id"),
-		incomingData:   make([]byte, 0),
-		startTime:      time.Now(),
-		requests:       0,
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -89,7 +81,7 @@ func (p *PubSub) initSubscriber(appPort int) {
 
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
-	p.requests++
+
 	b, ok := e.Data.([]byte)
 	if !ok {
 		return false, err
@@ -103,22 +95,30 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 	if err != nil {
 		return false, err
 	}
-	switch in.Command {
-	case "info":
-		description := p.GetDescription(in.Value)
-		p.Publish(viper.GetString("dapr.publish.topic"), []byte(description))
-	case "uptime":
-		uptime := p.GetUptime()
-		p.Publish(viper.GetString("dapr.publish.topic"), []byte(uptime))
-	case "requests":
-		requests := p.GetRequestsCount()
-		p.Publish(viper.GetString("dapr.publish.topic"), []byte(requests))
-	case "time":
-		time := p.GetTime()
-		p.Publish(viper.GetString("dapr.publish.topic"), []byte(time))
-	case "reset":
-		status := p.Reset()
-		p.Publish(viper.GetString("dapr.publish.topic"), []byte(status))
+
+	conn, err := grpc.Dial("127.0.0.1:9090", grpc.WithInsecure())
+	if err != nil {
+		p.Logger.Fatalf("Failed to dial %s: %v", "127.0.0.1:9090", err)
+	}
+	defer conn.Close()
+	c := pb.NewStorageClient(conn)
+	res, err := c.Get(context.Background(), &pb.GetRequest{
+		Value:   in.Value,
+		Command: in.Command,
+		Service: in.Service,
+	})
+	if err != nil {
+		p.Publish(viper.GetString("dapr.publish.topic"), []byte(err.Error()))
+		// return nil, status.Error(codes.Unknown, fmt.Sprintf("Failed to call RPC method GetDescription: %v", err))
+		// s.Logger.Fatalf("Failed to call RPC method GetDescription: %v", err)
+	}
+	b, err = json.Marshal(res)
+	if err != nil {
+		p.Logger.Fatal(err)
+	}
+	err = p.Publish(viper.GetString("dapr.publish.topic"), b)
+	if err != nil {
+		p.Logger.Fatal(err)
 	}
 	return false, err
 }
@@ -134,32 +134,4 @@ func (p *PubSub) Publish(topic string, msg []byte) error {
 		PubsubName: p.Name,
 	})
 	return err
-}
-
-func (p *PubSub) GetDescription(value string) string {
-	if value == "" {
-		return p.description
-	}
-	p.description = value
-	return p.description
-}
-
-func (p *PubSub) GetUptime() string {
-	uptime := time.Since(p.startTime)
-	return uptime.String()
-}
-
-func (p *PubSub) GetRequestsCount() string {
-	return string(rune(p.requests))
-}
-
-func (p *PubSub) GetTime() string {
-	return time.Now().String()
-}
-
-func (p *PubSub) Reset() string {
-	p.description = viper.GetString("app.id")
-	p.requests = viper.GetInt64("app.requests")
-	p.startTime = time.Now()
-	return "service restarted"
 }
