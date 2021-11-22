@@ -1,0 +1,49 @@
+POST http://0.0.0.0:8080/app1/v1/responder
+
+{
+    "command": "info",
+    "value": ""
+}
+
+###
+POST http://0.0.0.0:8080/app1/v1/responder
+
+{
+    "command": "uptime",
+    "value": ""
+}
+
+###
+POST http://0.0.0.0:8080/app1/v1/storage
+
+{
+    "command": "requests",
+    "value": ""
+}
+
+###
+POST http://0.0.0.0:8080/app1/v1/responder
+
+{
+    "command": "mode",
+    "value": ""
+}
+
+###
+POST http://0.0.0.0:8080/app1/v1/storage
+
+{
+    "command": "time",
+    "value": ""
+}
+
+###
+POST http://0.0.0.0:8080/app1/v1/storage
+
+{
+    "command": "reset",
+    "value": ""
+}
+
+###
+GET http://0.0.0.0:8080/app1/v1/version
