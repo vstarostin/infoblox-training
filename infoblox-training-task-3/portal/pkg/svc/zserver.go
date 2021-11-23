@@ -18,7 +18,8 @@ import (
 
 const (
 	// version is the current version of the service
-	version = "0.0.1"
+	version            = "0.0.1"
+	errInvalidArgument = "please use commands: info, uptime, requests or reset"
 )
 
 // Default implementation of the Portal server interface
@@ -82,17 +83,16 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		case "reset":
 			response = s.Reset()
 		default:
-			return nil, status.Error(codes.InvalidArgument, "please provide commands: info, uptime, requests or reset")
+			return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 		}
 		return &pb.GetResponse{Service: in.GetService(), Response: response}, nil
 
 	}
 	if in.GetService() == "storage" && in.GetCommand() == "mode" {
-		return nil, status.Error(codes.InvalidArgument, "please provide commands: info, uptime, requests or reset")
+		return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 	}
 
 	if in.GetService() == "responder" || in.GetService() == "storage" {
-		// conn, err := grpc.Dial("0.0.0.1:9095", grpc.WithInsecure())
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("responder.port")), grpc.WithInsecure())
 		if err != nil {
 			s.Logger.Fatalf("Failed to dial %s: %v", fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("responder.port")), err)

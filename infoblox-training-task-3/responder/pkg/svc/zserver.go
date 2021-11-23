@@ -18,8 +18,9 @@ import (
 
 const (
 	// version is the current version of the service
-	version           = "0.0.1"
-	modeFalseResponse = "service is temporarily disabled"
+	version            = "0.0.1"
+	modeFalseResponse  = "service is temporarily disabled"
+	errInvalidArgument = "please use commands: info, uptime, requests or reset"
 )
 
 // Default implementation of the Responder server interface
@@ -59,7 +60,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		case "reset":
 			response = s.Reset()
 		default:
-			return nil, status.Error(codes.InvalidArgument, "please provide commands: info, uptime, requests or reset")
+			return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 		}
 		return &pb.GetResponse{Service: in.GetService(), Response: response}, nil
 
