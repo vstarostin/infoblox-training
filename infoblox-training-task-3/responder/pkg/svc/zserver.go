@@ -75,9 +75,9 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		if err != nil {
 			return nil, status.Error(codes.Unknown, "error")
 		}
-		time.Sleep(10 * time.Millisecond)
 		incomingData := struct{ Response, Service string }{"", ""}
-		err = json.Unmarshal(s.pubsub.IncomingData, &incomingData)
+
+		err = json.Unmarshal(<-s.pubsub.IncomingData, &incomingData)
 		if err != nil {
 			return nil, status.Error(codes.Unknown, "err")
 		}
