@@ -1,4 +1,4 @@
-POST http://0.0.0.0:8080/app1/v1/responder
+POST http://0.0.0.0:8080/portal/v1/portal
 
 {
     "command": "info",
@@ -6,7 +6,7 @@ POST http://0.0.0.0:8080/app1/v1/responder
 }
 
 ###
-POST http://0.0.0.0:8080/app1/v1/responder
+POST http://0.0.0.0:8080/portal/v1/responder
 
 {
     "command": "uptime",
@@ -14,7 +14,7 @@ POST http://0.0.0.0:8080/app1/v1/responder
 }
 
 ###
-POST http://0.0.0.0:8080/app1/v1/storage
+POST http://0.0.0.0:8080/portal/v1/storage
 
 {
     "command": "requests",
@@ -22,7 +22,7 @@ POST http://0.0.0.0:8080/app1/v1/storage
 }
 
 ###
-POST http://0.0.0.0:8080/app1/v1/responder
+POST http://0.0.0.0:8080/portal/v1/responder
 
 {
     "command": "mode",
@@ -30,7 +30,7 @@ POST http://0.0.0.0:8080/app1/v1/responder
 }
 
 ###
-POST http://0.0.0.0:8080/app1/v1/storage
+POST http://0.0.0.0:8080/portal/v1/storage
 
 {
     "command": "time",
@@ -38,7 +38,7 @@ POST http://0.0.0.0:8080/app1/v1/storage
 }
 
 ###
-POST http://0.0.0.0:8080/app1/v1/storage
+POST http://0.0.0.0:8080/portal/v1/storage
 
 {
     "command": "reset",
@@ -46,4 +46,4 @@ POST http://0.0.0.0:8080/app1/v1/storage
 }
 
 ###
-GET http://0.0.0.0:8080/app1/v1/version
+GET http://0.0.0.0:8080/portal/v1/version
