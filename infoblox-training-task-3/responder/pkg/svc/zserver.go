@@ -10,15 +10,12 @@ import (
 	"infoblox-training-task-3/responder/pkg/dapr"
 	"infoblox-training-task-3/responder/pkg/pb"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 const (
-	// version is the current version of the service
-	version           = "0.0.1"
 	modeFalseResponse = "service is temporarily disabled"
 	serviceRestarted  = "service restarted"
 	errInvalidCommand = "please, use commands: info, uptime, requests, mode, time or reset"
@@ -32,12 +29,6 @@ type server struct {
 	startTime   time.Time
 	requests    int64
 	mode        bool
-}
-
-// GetVersion returns the current version of the service
-func (s *server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
-	s.requests++
-	return &pb.VersionResponse{Version: version}, nil
 }
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {

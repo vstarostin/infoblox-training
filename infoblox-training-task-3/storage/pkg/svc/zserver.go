@@ -9,7 +9,6 @@ import (
 	"infoblox-training-task-3/storage/pkg/model"
 	"infoblox-training-task-3/storage/pkg/pb"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
@@ -17,8 +16,6 @@ import (
 )
 
 const (
-	// version is the current version of the service
-	version           = "0.0.1"
 	serviceRestarted  = "service restarted"
 	errInvalidCommand = "please, use commands: info, uptime, requests, mode, time or reset"
 	errInvalidValue   = "please, use correct value"
@@ -31,11 +28,6 @@ type server struct {
 	description string
 	startTime   time.Time
 	requests    int64
-}
-
-// GetVersion returns the current version of the service
-func (s *server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
-	return &pb.VersionResponse{Version: version}, nil
 }
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {

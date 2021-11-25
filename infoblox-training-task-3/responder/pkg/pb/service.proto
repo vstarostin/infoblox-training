@@ -2,20 +2,10 @@ syntax = "proto3";
 
 package responder;
 
-import "google/protobuf/empty.proto";
-import "google/api/annotations.proto";
-import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
-import "protoc-gen-openapiv2/options/annotations.proto";
-
 option go_package = "infoblox-training-task-3/responder/pkg/pb;pb";
 
 service Responder {
-  rpc GetVersion (google.protobuf.Empty) returns (VersionResponse) {}
   rpc Get (GetRequest) returns (GetResponse) {}
-}
-
-message VersionResponse {
-  string version = 1;
 }
 
 message GetRequest {

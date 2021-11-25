@@ -7,7 +7,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,7 +18,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ResponderClient interface {
-	GetVersion(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 }
 
@@ -29,15 +27,6 @@ type responderClient struct {
 
 func NewResponderClient(cc grpc.ClientConnInterface) ResponderClient {
 	return &responderClient{cc}
-}
-
-func (c *responderClient) GetVersion(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error) {
-	out := new(VersionResponse)
-	err := c.cc.Invoke(ctx, "/responder.Responder/GetVersion", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *responderClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
@@ -53,7 +42,6 @@ func (c *responderClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.
 // All implementations should embed UnimplementedResponderServer
 // for forward compatibility
 type ResponderServer interface {
-	GetVersion(context.Context, *emptypb.Empty) (*VersionResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 }
 
@@ -61,9 +49,6 @@ type ResponderServer interface {
 type UnimplementedResponderServer struct {
 }
 
-func (UnimplementedResponderServer) GetVersion(context.Context, *emptypb.Empty) (*VersionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetVersion not implemented")
-}
 func (UnimplementedResponderServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
@@ -77,24 +62,6 @@ type UnsafeResponderServer interface {
 
 func RegisterResponderServer(s grpc.ServiceRegistrar, srv ResponderServer) {
 	s.RegisterService(&Responder_ServiceDesc, srv)
-}
-
-func _Responder_GetVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResponderServer).GetVersion(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/responder.Responder/GetVersion",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResponderServer).GetVersion(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Responder_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -122,10 +89,6 @@ var Responder_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "responder.Responder",
 	HandlerType: (*ResponderServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetVersion",
-			Handler:    _Responder_GetVersion_Handler,
-		},
 		{
 			MethodName: "Get",
 			Handler:    _Responder_Get_Handler,

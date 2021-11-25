@@ -11,28 +11,6 @@
     "version": "version not set"
   },
   "paths": {
-    "/version": {
-      "get": {
-        "tags": [
-          "Portal"
-        ],
-        "operationId": "PortalPortal_GetVersion",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/portalVersionResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        }
-      }
-    },
     "/{service}": {
       "post": {
         "tags": [
@@ -88,14 +66,6 @@
           "type": "string"
         },
         "service": {
-          "type": "string"
-        }
-      }
-    },
-    "portalVersionResponse": {
-      "type": "object",
-      "properties": {
-        "version": {
           "type": "string"
         }
       }

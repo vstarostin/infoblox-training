@@ -8,18 +8,14 @@ import (
 
 	"infoblox-training-task-3/portal/pkg/pb"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const (
-	// version is the current version of the service
-	version            = "0.0.1"
 	errInvalidArgument = "please use commands: info, uptime, requests or reset"
 )
 
@@ -32,7 +28,6 @@ type server struct {
 }
 
 type ResponderClient interface {
-	GetVersion(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*pb.VersionResponse, error)
 	Get(ctx context.Context, in *pb.GetRequest, opts ...grpc.CallOption) (*pb.GetResponse, error)
 }
 
@@ -44,15 +39,6 @@ func NewResponderClient(cc grpc.ClientConnInterface) ResponderClient {
 	return &responderClient{cc}
 }
 
-func (c *responderClient) GetVersion(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*pb.VersionResponse, error) {
-	out := new(pb.VersionResponse)
-	err := c.cc.Invoke(ctx, "/responder.Responder/GetVersion", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *responderClient) Get(ctx context.Context, in *pb.GetRequest, opts ...grpc.CallOption) (*pb.GetResponse, error) {
 	out := new(pb.GetResponse)
 	err := c.cc.Invoke(ctx, "/responder.Responder/Get", in, out, opts...)
@@ -60,12 +46,6 @@ func (c *responderClient) Get(ctx context.Context, in *pb.GetRequest, opts ...gr
 		return nil, err
 	}
 	return out, nil
-}
-
-// GetVersion returns the current version of the service
-func (s *server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse, error) {
-	s.requests++
-	return &pb.VersionResponse{Version: version}, nil
 }
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
