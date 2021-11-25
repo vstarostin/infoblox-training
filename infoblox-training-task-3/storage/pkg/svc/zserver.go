@@ -79,7 +79,7 @@ func (s *server) GetRequestsCount() string {
 }
 
 func (s *server) GetTime() string {
-	return time.Now().String()
+	return time.Now().UTC().String()
 }
 
 func (s *server) GetMode(mode model.ResponderMode) bool {
@@ -106,7 +106,7 @@ func (s *server) ResponderModeStatus(in string) (bool, error) {
 func (s *server) Reset() string {
 	s.description = viper.GetString("app.id")
 	s.requests = viper.GetInt64("app.requests")
-	s.startTime = time.Now()
+	s.startTime = time.Now().UTC()
 	return serviceRestarted
 }
 

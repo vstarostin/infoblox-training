@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	serviceRestarted   = "service restarted"
 	errInvalidArgument = "please use commands: info, uptime, requests or reset"
 )
 
@@ -115,14 +116,14 @@ func (s *server) GetRequests() string {
 }
 
 func (s *server) GetTime() string {
-	return time.Now().String()
+	return time.Now().UTC().String()
 }
 
 func (s *server) Reset() string {
 	s.description = viper.GetString("app.id")
 	s.requests = 0
-	s.startTime = time.Now()
-	return "service restarted"
+	s.startTime = time.Now().UTC()
+	return serviceRestarted
 }
 
 // NewBasicServer returns an instance of the default server interface

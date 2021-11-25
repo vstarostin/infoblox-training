@@ -134,14 +134,14 @@ func (s *server) ResponderModeStatus(in *pb.GetRequest) (string, error) {
 		return "", err
 	}
 	if s.mode != mode {
-		s.startTime = time.Now()
+		s.startTime = time.Now().UTC()
 	}
 	s.mode = mode
 	return incomingData.Response, nil
 }
 
 func (s *server) GetTime() string {
-	return time.Now().String()
+	return time.Now().UTC().String()
 }
 
 func (s *server) Reset(in *pb.GetRequest) (string, error) {
