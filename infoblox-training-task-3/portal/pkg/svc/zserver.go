@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"infoblox-training-task-3/portal/pkg/pb"
@@ -50,6 +51,7 @@ func (c *responderClient) Handler(ctx context.Context, in *pb.HandlerRequest, op
 }
 
 func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
+	atomic.AddInt64(&s.requests, 1)
 	s.requests++
 	var response string
 	if in.GetService() == "portal" {

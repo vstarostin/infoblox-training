@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"infoblox-training-task-3/responder/pkg/dapr"
@@ -32,7 +33,7 @@ type server struct {
 }
 
 func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
-	s.requests++
+	atomic.AddInt64(&s.requests, 1)
 	var response string
 	var err error
 	if in.GetService() == "responder" {
