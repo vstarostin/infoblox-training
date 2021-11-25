@@ -33,9 +33,10 @@ var (
 	_ = anypb.Any{}
 )
 
-// Validate checks the field values on GetRequest with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
-func (m *GetRequest) Validate() error {
+// Validate checks the field values on HandlerRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *HandlerRequest) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -49,9 +50,9 @@ func (m *GetRequest) Validate() error {
 	return nil
 }
 
-// GetRequestValidationError is the validation error returned by
-// GetRequest.Validate if the designated constraints aren't met.
-type GetRequestValidationError struct {
+// HandlerRequestValidationError is the validation error returned by
+// HandlerRequest.Validate if the designated constraints aren't met.
+type HandlerRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -59,22 +60,22 @@ type GetRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e GetRequestValidationError) Field() string { return e.field }
+func (e HandlerRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GetRequestValidationError) Reason() string { return e.reason }
+func (e HandlerRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e GetRequestValidationError) Cause() error { return e.cause }
+func (e HandlerRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e GetRequestValidationError) Key() bool { return e.key }
+func (e HandlerRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e GetRequestValidationError) ErrorName() string { return "GetRequestValidationError" }
+func (e HandlerRequestValidationError) ErrorName() string { return "HandlerRequestValidationError" }
 
 // Error satisfies the builtin error interface
-func (e GetRequestValidationError) Error() string {
+func (e HandlerRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -86,14 +87,14 @@ func (e GetRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sGetRequest.%s: %s%s",
+		"invalid %sHandlerRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = GetRequestValidationError{}
+var _ error = HandlerRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -101,12 +102,12 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = GetRequestValidationError{}
+} = HandlerRequestValidationError{}
 
-// Validate checks the field values on GetResponse with the rules defined in
-// the proto definition for this message. If any rules are violated, an error
-// is returned.
-func (m *GetResponse) Validate() error {
+// Validate checks the field values on HandlerResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *HandlerResponse) Validate() error {
 	if m == nil {
 		return nil
 	}
@@ -118,9 +119,9 @@ func (m *GetResponse) Validate() error {
 	return nil
 }
 
-// GetResponseValidationError is the validation error returned by
-// GetResponse.Validate if the designated constraints aren't met.
-type GetResponseValidationError struct {
+// HandlerResponseValidationError is the validation error returned by
+// HandlerResponse.Validate if the designated constraints aren't met.
+type HandlerResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -128,22 +129,22 @@ type GetResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e GetResponseValidationError) Field() string { return e.field }
+func (e HandlerResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GetResponseValidationError) Reason() string { return e.reason }
+func (e HandlerResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e GetResponseValidationError) Cause() error { return e.cause }
+func (e HandlerResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e GetResponseValidationError) Key() bool { return e.key }
+func (e HandlerResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e GetResponseValidationError) ErrorName() string { return "GetResponseValidationError" }
+func (e HandlerResponseValidationError) ErrorName() string { return "HandlerResponseValidationError" }
 
 // Error satisfies the builtin error interface
-func (e GetResponseValidationError) Error() string {
+func (e HandlerResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -155,14 +156,14 @@ func (e GetResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sGetResponse.%s: %s%s",
+		"invalid %sHandlerResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = GetResponseValidationError{}
+var _ error = HandlerResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -170,4 +171,4 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = GetResponseValidationError{}
+} = HandlerResponseValidationError{}

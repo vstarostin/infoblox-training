@@ -5,16 +5,16 @@ package storage;
 option go_package = "infoblox-training-task-3/storage/pkg/pb;pb";
 
 service Storage {
-  rpc Get (GetRequest) returns (GetResponse) {}
+  rpc Handler (HandlerRequest) returns (HandlerResponse) {}
 }
 
-message GetRequest {
+message HandlerRequest {
   string command = 1;
   string value = 2;
   string service = 3;
 }
 
-message GetResponse {
+message HandlerResponse {
   string response = 1;
   string service = 2;
 }

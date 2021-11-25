@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ResponderClient interface {
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	Handler(ctx context.Context, in *HandlerRequest, opts ...grpc.CallOption) (*HandlerResponse, error)
 }
 
 type responderClient struct {
@@ -29,9 +29,9 @@ func NewResponderClient(cc grpc.ClientConnInterface) ResponderClient {
 	return &responderClient{cc}
 }
 
-func (c *responderClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/responder.Responder/Get", in, out, opts...)
+func (c *responderClient) Handler(ctx context.Context, in *HandlerRequest, opts ...grpc.CallOption) (*HandlerResponse, error) {
+	out := new(HandlerResponse)
+	err := c.cc.Invoke(ctx, "/responder.Responder/Handler", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,15 +42,15 @@ func (c *responderClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.
 // All implementations should embed UnimplementedResponderServer
 // for forward compatibility
 type ResponderServer interface {
-	Get(context.Context, *GetRequest) (*GetResponse, error)
+	Handler(context.Context, *HandlerRequest) (*HandlerResponse, error)
 }
 
 // UnimplementedResponderServer should be embedded to have forward compatible implementations.
 type UnimplementedResponderServer struct {
 }
 
-func (UnimplementedResponderServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedResponderServer) Handler(context.Context, *HandlerRequest) (*HandlerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Handler not implemented")
 }
 
 // UnsafeResponderServer may be embedded to opt out of forward compatibility for this service.
@@ -64,20 +64,20 @@ func RegisterResponderServer(s grpc.ServiceRegistrar, srv ResponderServer) {
 	s.RegisterService(&Responder_ServiceDesc, srv)
 }
 
-func _Responder_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
+func _Responder_Handler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandlerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ResponderServer).Get(ctx, in)
+		return srv.(ResponderServer).Handler(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/responder.Responder/Get",
+		FullMethod: "/responder.Responder/Handler",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResponderServer).Get(ctx, req.(*GetRequest))
+		return srv.(ResponderServer).Handler(ctx, req.(*HandlerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -90,8 +90,8 @@ var Responder_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ResponderServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Responder_Get_Handler,
+			MethodName: "Handler",
+			Handler:    _Responder_Handler_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

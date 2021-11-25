@@ -4,5 +4,5 @@ import (
 	"testing"
 )
 
-func TestGet(t *testing.T) {
+func TestHandler(t *testing.T) {
 }

@@ -31,7 +31,7 @@ type server struct {
 	mode        bool
 }
 
-func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
 	s.requests++
 	var response string
 	var err error
@@ -56,7 +56,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, errInvalidValue)
 		}
-		return &pb.GetResponse{Service: in.GetService(), Response: response}, nil
+		return &pb.HandlerResponse{Service: in.GetService(), Response: response}, nil
 
 	}
 
@@ -75,7 +75,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		if err != nil {
 			return nil, status.Error(codes.Unknown, err.Error())
 		}
-		return &pb.GetResponse{Service: in.GetService(), Response: incomingData.Response}, nil
+		return &pb.HandlerResponse{Service: in.GetService(), Response: incomingData.Response}, nil
 	}
 
 	return nil, status.Error(codes.Unknown, modeFalseResponse)
@@ -89,7 +89,7 @@ func (s *server) GetDescription(value string) string {
 	return s.description
 }
 
-func (s *server) GetUptime(in *pb.GetRequest) (string, error) {
+func (s *server) GetUptime(in *pb.HandlerRequest) (string, error) {
 	if in.GetValue() != "" {
 		return "", fmt.Errorf(errInvalidValue)
 	}
@@ -112,7 +112,7 @@ func (s *server) GetRequestsCount() string {
 	return strconv.Itoa(int(s.requests))
 }
 
-func (s *server) ResponderModeStatus(in *pb.GetRequest) (string, error) {
+func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 	if in.GetValue() != "false" && in.GetValue() != "true" && in.GetValue() != "" {
 		return "", fmt.Errorf(errInvalidValue)
 	}
@@ -144,7 +144,7 @@ func (s *server) GetTime() string {
 	return time.Now().UTC().String()
 }
 
-func (s *server) Reset(in *pb.GetRequest) (string, error) {
+func (s *server) Reset(in *pb.HandlerRequest) (string, error) {
 	s.description = viper.GetString("app.id")
 	s.requests = 0
 	in.Command = "mode"

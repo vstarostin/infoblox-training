@@ -105,7 +105,7 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 	}
 	defer conn.Close()
 	c := pb.NewStorageClient(conn)
-	res, err := c.Get(context.Background(), &pb.GetRequest{
+	res, err := c.Handler(context.Background(), &pb.HandlerRequest{
 		Value:   in.Value,
 		Command: in.Command,
 		Service: in.Service,

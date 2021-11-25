@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StorageClient interface {
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	Handler(ctx context.Context, in *HandlerRequest, opts ...grpc.CallOption) (*HandlerResponse, error)
 }
 
 type storageClient struct {
@@ -29,9 +29,9 @@ func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
 	return &storageClient{cc}
 }
 
-func (c *storageClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/storage.Storage/Get", in, out, opts...)
+func (c *storageClient) Handler(ctx context.Context, in *HandlerRequest, opts ...grpc.CallOption) (*HandlerResponse, error) {
+	out := new(HandlerResponse)
+	err := c.cc.Invoke(ctx, "/storage.Storage/Handler", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,15 +42,15 @@ func (c *storageClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.Ca
 // All implementations should embed UnimplementedStorageServer
 // for forward compatibility
 type StorageServer interface {
-	Get(context.Context, *GetRequest) (*GetResponse, error)
+	Handler(context.Context, *HandlerRequest) (*HandlerResponse, error)
 }
 
 // UnimplementedStorageServer should be embedded to have forward compatible implementations.
 type UnimplementedStorageServer struct {
 }
 
-func (UnimplementedStorageServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedStorageServer) Handler(context.Context, *HandlerRequest) (*HandlerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Handler not implemented")
 }
 
 // UnsafeStorageServer may be embedded to opt out of forward compatibility for this service.
@@ -64,20 +64,20 @@ func RegisterStorageServer(s grpc.ServiceRegistrar, srv StorageServer) {
 	s.RegisterService(&Storage_ServiceDesc, srv)
 }
 
-func _Storage_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
+func _Storage_Handler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandlerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StorageServer).Get(ctx, in)
+		return srv.(StorageServer).Handler(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/storage.Storage/Get",
+		FullMethod: "/storage.Storage/Handler",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).Get(ctx, req.(*GetRequest))
+		return srv.(StorageServer).Handler(ctx, req.(*HandlerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -90,8 +90,8 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*StorageServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Storage_Get_Handler,
+			MethodName: "Handler",
+			Handler:    _Storage_Handler_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

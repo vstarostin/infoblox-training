@@ -30,7 +30,7 @@ type server struct {
 	requests    int64
 }
 
-func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
 	s.requests++
 	var response string
 	var err error
@@ -55,7 +55,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 	if err != nil {
 		return nil, status.Error(codes.Unknown, "err")
 	}
-	return &pb.GetResponse{
+	return &pb.HandlerResponse{
 		Service:  in.GetService(),
 		Response: response,
 	}, nil

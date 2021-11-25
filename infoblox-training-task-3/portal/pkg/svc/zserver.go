@@ -29,7 +29,7 @@ type server struct {
 }
 
 type ResponderClient interface {
-	Get(ctx context.Context, in *pb.GetRequest, opts ...grpc.CallOption) (*pb.GetResponse, error)
+	Handler(ctx context.Context, in *pb.HandlerRequest, opts ...grpc.CallOption) (*pb.HandlerResponse, error)
 }
 
 type responderClient struct {
@@ -40,16 +40,16 @@ func NewResponderClient(cc grpc.ClientConnInterface) ResponderClient {
 	return &responderClient{cc}
 }
 
-func (c *responderClient) Get(ctx context.Context, in *pb.GetRequest, opts ...grpc.CallOption) (*pb.GetResponse, error) {
-	out := new(pb.GetResponse)
-	err := c.cc.Invoke(ctx, "/responder.Responder/Get", in, out, opts...)
+func (c *responderClient) Handler(ctx context.Context, in *pb.HandlerRequest, opts ...grpc.CallOption) (*pb.HandlerResponse, error) {
+	out := &pb.HandlerResponse{}
+	err := c.cc.Invoke(ctx, "/responder.Responder/Handler", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
 	s.requests++
 	var response string
 	if in.GetService() == "portal" {
@@ -67,7 +67,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		default:
 			return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 		}
-		return &pb.GetResponse{Service: in.GetService(), Response: response}, nil
+		return &pb.HandlerResponse{Service: in.GetService(), Response: response}, nil
 
 	}
 	if in.GetService() == "storage" && in.GetCommand() == "mode" {
@@ -81,7 +81,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		}
 		defer conn.Close()
 		c := NewResponderClient(conn)
-		res, err := c.Get(context.Background(), &pb.GetRequest{
+		res, err := c.Handler(context.Background(), &pb.HandlerRequest{
 			Value:   in.GetValue(),
 			Command: in.GetCommand(),
 			Service: in.GetService(),
@@ -89,13 +89,13 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		if err != nil {
 			return nil, status.Error(codes.Unknown, err.Error())
 		}
-		response := &pb.GetResponse{
+		response := &pb.HandlerResponse{
 			Service:  res.GetService(),
 			Response: res.GetResponse(),
 		}
 		return response, nil
 	}
-	return nil, status.Error(codes.InvalidArgument, "err")
+	return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 }
 
 func (s *server) GetDescription(value string) string {
