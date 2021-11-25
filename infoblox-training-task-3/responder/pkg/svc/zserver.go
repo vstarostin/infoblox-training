@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	modeFalseResponse = "service is temporarily disabled"
-	serviceRestarted  = "service restarted"
-	errInvalidCommand = "please, use commands: info, uptime, requests, mode, time or reset"
-	errInvalidValue   = "please, use correct value"
+	modeFalseResponse  = "service is temporarily disabled"
+	serviceUnavailable = "service is unavailable"
+	serviceRestarted   = "service restarted"
+	errInvalidCommand  = "please, use commands: info, uptime, requests, mode, time or reset"
+	errInvalidValue    = "please, use correct value"
 )
 
 // Default implementation of the Responder server interface
@@ -55,7 +56,7 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 			return nil, status.Error(codes.InvalidArgument, errInvalidCommand)
 		}
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, errInvalidValue)
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 		return &pb.HandlerResponse{Service: in.GetService(), Response: response}, nil
 
@@ -64,21 +65,26 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	if in.GetService() == "storage" && s.mode {
 		b, err := json.Marshal(in)
 		if err != nil {
-			return nil, status.Error(codes.Unknown, "err")
+			return nil, status.Error(codes.Unknown, err.Error())
 		}
 		err = s.pubsub.Publish(viper.GetString("dapr.subscribe.topic"), b)
 		if err != nil {
-			return nil, status.Error(codes.Unknown, "error")
+			return nil, status.Error(codes.Unknown, err.Error())
 		}
 		incomingData := struct{ Response, Service string }{"", ""}
 
-		err = json.Unmarshal(<-s.pubsub.IncomingData, &incomingData)
-		if err != nil {
-			return nil, status.Error(codes.Unknown, err.Error())
+		select {
+		case data := <-s.pubsub.IncomingData:
+			err = json.Unmarshal(data, &incomingData)
+			if err != nil {
+				return nil, status.Error(codes.Unknown, err.Error())
+			}
+			return &pb.HandlerResponse{Service: in.GetService(), Response: incomingData.Response}, nil
+		case <-time.After(5 * time.Second):
+			s.mode = false
+			return nil, status.Error(codes.Unknown, serviceUnavailable)
 		}
-		return &pb.HandlerResponse{Service: in.GetService(), Response: incomingData.Response}, nil
 	}
-
 	return nil, status.Error(codes.Unknown, modeFalseResponse)
 }
 
@@ -126,19 +132,26 @@ func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 		return "", err
 	}
 	incomingData := struct{ Response, Service string }{"", ""}
-	err = json.Unmarshal(<-s.pubsub.IncomingData, &incomingData)
-	if err != nil {
-		return "", err
+
+	select {
+	case data := <-s.pubsub.IncomingData:
+		err = json.Unmarshal(data, &incomingData)
+		if err != nil {
+			return "", err
+		}
+		mode, err := strconv.ParseBool(incomingData.Response)
+		if err != nil {
+			return "", err
+		}
+		if s.mode != mode {
+			s.startTime = time.Now().UTC()
+		}
+		s.mode = mode
+		return incomingData.Response, nil
+	case <-time.After(5 * time.Second):
+		s.mode = false
+		return "", fmt.Errorf(serviceUnavailable)
 	}
-	mode, err := strconv.ParseBool(incomingData.Response)
-	if err != nil {
-		return "", err
-	}
-	if s.mode != mode {
-		s.startTime = time.Now().UTC()
-	}
-	s.mode = mode
-	return incomingData.Response, nil
 }
 
 func (s *server) GetTime() string {
@@ -147,7 +160,7 @@ func (s *server) GetTime() string {
 
 func (s *server) Reset(in *pb.HandlerRequest) (string, error) {
 	s.description = viper.GetString("app.id")
-	s.requests = 0
+	s.requests = viper.GetInt64("app.requests")
 	in.Command = "mode"
 	in.Value = "true"
 	val, err := s.ResponderModeStatus(in)
