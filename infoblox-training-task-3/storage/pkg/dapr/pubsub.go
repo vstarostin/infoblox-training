@@ -5,33 +5,57 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"sync/atomic"
+	"time"
 
-	"infoblox-training-task-3/storage/pkg/pb"
+	"infoblox-training-task-3/storage/pkg/model"
 
 	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/dapr/go-sdk/service/common"
 	daprd "github.com/dapr/go-sdk/service/grpc"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
+const (
+	errTypeAssertion  = "type assertion error"
+	errInvalidCommand = "please, use commands info, uptime, requests, mode, time or reset"
+	serviceRestarted  = "service restarted"
+)
+
 type PubSub struct {
 	client         daprpb.DaprClient
+	db             *gorm.DB
 	Logger         *logrus.Logger
 	TopicSubscribe string
 	Name           string
-	IncomingData   chan []byte
+	description    string
+	startTime      time.Time
+	requests       int64
 }
 
-func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger) (*PubSub, error) {
+func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger, dbConnectionString string) (*PubSub, error) {
 	var err error
 	init := false
+	db, err := gorm.Open("postgres", dbConnectionString)
+	if err != nil {
+		return nil, err
+	}
+	if isInit := db.HasTable(&model.ResponderMode{}); !isInit {
+		db.CreateTable(&model.ResponderMode{Mode: true})
+	}
 	ps := &PubSub{
 		Logger:         log,
+		db:             db,
 		TopicSubscribe: topic,
 		Name:           pubsubName,
-		IncomingData:   make(chan []byte),
+		description:    viper.GetString("app.id"),
+		startTime:      time.Now().UTC(),
+		requests:       viper.GetInt64("app.requests"),
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -84,42 +108,46 @@ func (p *PubSub) initSubscriber(appPort int) {
 
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
-
+	atomic.AddInt64(&p.requests, 1)
 	b, ok := e.Data.([]byte)
 	if !ok {
-		return false, err
+		return false, fmt.Errorf(errTypeAssertion)
 	}
 	in := struct {
 		Command, Value, Service string
 	}{
 		"", "", "",
 	}
-	_ = json.Unmarshal(b, &in)
+	err = json.Unmarshal(b, &in)
 	if err != nil {
 		return false, err
 	}
-
-	conn, err := grpc.Dial("127.0.0.1:9090", grpc.WithInsecure())
-	if err != nil {
-		p.Logger.Fatalf("Failed to dial %s: %v", "127.0.0.1:9090", err)
+	var response string
+	switch in.Command {
+	case "info":
+		response = p.GetDescription(in.Value)
+	case "uptime":
+		response = p.GetUptime()
+	case "requests":
+		response = p.GetRequestsCount()
+	case "time":
+		response = p.GetTime()
+	case "reset":
+		response = p.Reset()
+	case "mode":
+		mode := p.ResponderModeStatus(in.Value)
+		response = strconv.FormatBool(mode)
+	default:
+		response = errInvalidCommand
 	}
-	defer conn.Close()
-	c := pb.NewStorageClient(conn)
-	res, err := c.Handler(context.Background(), &pb.HandlerRequest{
-		Value:   in.Value,
-		Command: in.Command,
-		Service: in.Service,
-	})
+	resp := struct{ Service, Response string }{Service: in.Service, Response: response}
+	b, err = json.Marshal(resp)
 	if err != nil {
-		return false, err
-	}
-	b, err = json.Marshal(res)
-	if err != nil {
-		return false, err
+		return true, err
 	}
 	err = p.Publish(viper.GetString("dapr.publish.topic"), b)
 	if err != nil {
-		return false, err
+		return true, err
 	}
 	return false, nil
 }
@@ -135,4 +163,53 @@ func (p *PubSub) Publish(topic string, msg []byte) error {
 		PubsubName: p.Name,
 	})
 	return err
+}
+
+func (p *PubSub) GetDescription(value string) string {
+	if value == "" {
+		return p.description
+	}
+	p.description = value
+	return p.description
+}
+
+func (p *PubSub) GetUptime() string {
+	uptime := time.Since(p.startTime)
+	return uptime.String()
+}
+
+func (p *PubSub) GetRequestsCount() string {
+	return strconv.Itoa(int(p.requests))
+}
+
+func (p *PubSub) GetTime() string {
+	return time.Now().UTC().String()
+}
+
+func (p *PubSub) GetMode(mode model.ResponderMode) bool {
+	p.db.Find(&mode)
+	return mode.Mode
+}
+
+func (p *PubSub) SetMode(value bool) {
+	p.db.Exec("UPDATE responder_modes SET mode=? WHERE id=?", value, 1)
+}
+
+func (p *PubSub) ResponderModeStatus(in string) bool {
+	responderMode := model.ResponderMode{}
+	if in != "" {
+		value, err := strconv.ParseBool(in)
+		if err != nil {
+			return false
+		}
+		p.SetMode(value)
+	}
+	return p.GetMode(responderMode)
+}
+
+func (p *PubSub) Reset() string {
+	p.description = viper.GetString("app.id")
+	p.requests = viper.GetInt64("app.requests")
+	p.startTime = time.Now().UTC()
+	return serviceRestarted
 }

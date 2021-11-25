@@ -8,7 +8,6 @@ import (
 
 	"infoblox-training-task-3/storage/pkg/dapr"
 
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -20,16 +19,16 @@ import (
 func main() {
 	doneC := make(chan error)
 	logger := NewLogger()
-	pubsub, err := dapr.InitPubsub(viper.GetString("dapr.subscribe.topic"), viper.GetString("dapr.pubsub.name"), viper.GetInt("dapr.appPort"), viper.GetInt("dapr.grpcport"), logger)
+	if viper.GetString("database.dsn") == "" {
+		setDBConnection()
+	}
+	_, err := dapr.InitPubsub(viper.GetString("dapr.subscribe.topic"), viper.GetString("dapr.pubsub.name"), viper.GetInt("dapr.appPort"), viper.GetInt("dapr.grpcport"), logger, viper.GetString("database.dsn"))
 	if err != nil {
 		logger.Fatalf("Cannot initialize pubsub: %v", err)
 	}
 	if viper.GetBool("internal.enable") {
-		go func() { doneC <- ServeInternal(logger) }()
+		doneC <- ServeInternal(logger)
 	}
-
-	go func() { doneC <- ServeExternal(logger, pubsub) }()
-
 	if err := <-doneC; err != nil {
 		logger.Fatal(err)
 	}
@@ -68,35 +67,6 @@ func ServeInternal(logger *logrus.Logger) error {
 
 	logger.Debugf("serving internal http at %q", fmt.Sprintf("%s:%s", viper.GetString("internal.address"), viper.GetString("internal.port")))
 	return s.Serve(nil, l)
-}
-
-// ServeExternal builds and runs the server that listens on ServerAddress and GatewayAddress
-func ServeExternal(logger *logrus.Logger, pubsub *dapr.PubSub) error {
-
-	if viper.GetString("database.dsn") == "" {
-		setDBConnection()
-	}
-	grpcServer, err := NewGRPCServer(logger, pubsub, viper.GetString("database.dsn"))
-	if err != nil {
-		logger.Fatalln(err)
-	}
-	grpc_prometheus.Register(grpcServer)
-
-	s, err := server.NewServer(
-		server.WithGrpcServer(grpcServer),
-	)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-
-	grpcL, err := net.Listen("tcp", fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("server.port")))
-	if err != nil {
-		logger.Fatalln(err)
-	}
-
-	logger.Printf("serving gRPC at %s:%s", viper.GetString("server.address"), viper.GetString("server.port"))
-
-	return s.Serve(grpcL, nil)
 }
 
 func init() {
