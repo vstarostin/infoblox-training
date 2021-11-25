@@ -3,26 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
-	"infoblox-training-task-3/portal/pkg/pb"
 	"log"
 	"net"
 	"net/http"
 	"strings"
 
+	"infoblox-training-task-3/portal/pkg/pb"
+
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/infobloxopen/atlas-app-toolkit/gateway"
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
-
-	"github.com/infobloxopen/atlas-app-toolkit/gateway"
-	"github.com/infobloxopen/atlas-app-toolkit/server"
-
-	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 )
 
 func main() {

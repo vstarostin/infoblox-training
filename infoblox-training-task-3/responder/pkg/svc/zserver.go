@@ -18,9 +18,11 @@ import (
 
 const (
 	// version is the current version of the service
-	version            = "0.0.1"
-	modeFalseResponse  = "service is temporarily disabled"
-	errInvalidArgument = "please use commands: info, uptime, requests or reset"
+	version           = "0.0.1"
+	modeFalseResponse = "service is temporarily disabled"
+	serviceRestarted  = "service restarted"
+	errInvalidCommand = "please, use commands: info, uptime, requests, mode, time or reset"
+	errInvalidValue   = "please, use correct value"
 )
 
 // Default implementation of the Responder server interface
@@ -41,26 +43,27 @@ func (s *server) GetVersion(context.Context, *empty.Empty) (*pb.VersionResponse,
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
 	s.requests++
 	var response string
+	var err error
 	if in.GetService() == "responder" {
 		switch in.GetCommand() {
 		case "info":
 			response = s.GetDescription(in.Value)
 		case "uptime":
-			response = s.GetUptime()
+			in.Command = "mode"
+			response, err = s.GetUptime(in)
 		case "requests":
 			response = s.GetRequestsCount()
 		case "mode":
-			value, err := s.GetMode(in.Value)
-			if err != nil {
-				return nil, status.Error(codes.Unknown, "err")
-			}
-			response = strconv.FormatBool(value)
+			response, err = s.ResponderModeStatus(in)
 		case "time":
 			response = s.GetTime()
 		case "reset":
-			response = s.Reset()
+			response, err = s.Reset(in)
 		default:
-			return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
+			return nil, status.Error(codes.InvalidArgument, errInvalidCommand)
+		}
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, errInvalidValue)
 		}
 		return &pb.GetResponse{Service: in.GetService(), Response: response}, nil
 
@@ -79,7 +82,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 
 		err = json.Unmarshal(<-s.pubsub.IncomingData, &incomingData)
 		if err != nil {
-			return nil, status.Error(codes.Unknown, "err")
+			return nil, status.Error(codes.Unknown, err.Error())
 		}
 		return &pb.GetResponse{Service: in.GetService(), Response: incomingData.Response}, nil
 	}
@@ -95,43 +98,75 @@ func (s *server) GetDescription(value string) string {
 	return s.description
 }
 
-func (s *server) GetUptime() string {
-	if s.mode {
-		uptime := time.Since(s.startTime)
-		return uptime.String()
+func (s *server) GetUptime(in *pb.GetRequest) (string, error) {
+	if in.GetValue() != "" {
+		return "", fmt.Errorf(errInvalidValue)
 	}
-	return modeFalseResponse
+	val, err := s.ResponderModeStatus(in)
+	if err != nil {
+		return "", err
+	}
+	value, err := strconv.ParseBool(val)
+	if err != nil {
+		return "", err
+	}
+	if !value {
+		return modeFalseResponse, nil
+	}
+	uptime := time.Since(s.startTime)
+	return uptime.String(), nil
 }
 
 func (s *server) GetRequestsCount() string {
-	return string(rune(s.requests))
+	return strconv.Itoa(int(s.requests))
 }
 
-func (s *server) GetMode(value string) (bool, error) {
-	if value == "" {
-		return s.mode, nil
+func (s *server) ResponderModeStatus(in *pb.GetRequest) (string, error) {
+	if in.GetValue() != "false" && in.GetValue() != "true" && in.GetValue() != "" {
+		return "", fmt.Errorf(errInvalidValue)
 	}
-	if value == "false" || value == "true" {
-		v, err := strconv.ParseBool(value)
-		if err != nil {
-			return false, err
-		}
-		s.mode = v
+	b, err := json.Marshal(in)
+	if err != nil {
+		return "", err
+	}
+	err = s.pubsub.Publish(viper.GetString("dapr.subscribe.topic"), b)
+	if err != nil {
+		return "", err
+	}
+	incomingData := struct{ Response, Service string }{"", ""}
+	err = json.Unmarshal(<-s.pubsub.IncomingData, &incomingData)
+	if err != nil {
+		return "", err
+	}
+	mode, err := strconv.ParseBool(incomingData.Response)
+	if err != nil {
+		return "", err
+	}
+	if s.mode != mode {
 		s.startTime = time.Now()
-		return s.mode, nil
 	}
-	return false, fmt.Errorf("err")
+	s.mode = mode
+	return incomingData.Response, nil
 }
 
 func (s *server) GetTime() string {
 	return time.Now().String()
 }
 
-func (s *server) Reset() string {
+func (s *server) Reset(in *pb.GetRequest) (string, error) {
 	s.description = viper.GetString("app.id")
 	s.requests = 0
-	s.startTime = time.Now()
-	return "service restarted"
+	in.Command = "mode"
+	in.Value = "true"
+	val, err := s.ResponderModeStatus(in)
+	if err != nil {
+		return "", err
+	}
+	_, err = strconv.ParseBool(val)
+	if err != nil {
+		return "", err
+	}
+	return serviceRestarted, nil
 }
 
 // NewBasicServer returns an instance of the default server interface

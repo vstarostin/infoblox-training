@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"infoblox-training-task-3/storage/pkg/pb"
 
 	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
@@ -20,6 +21,7 @@ type PubSub struct {
 	Logger         *logrus.Logger
 	TopicSubscribe string
 	Name           string
+	IncomingData   chan []byte
 }
 
 func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger) (*PubSub, error) {
@@ -29,6 +31,7 @@ func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log 
 		Logger:         log,
 		TopicSubscribe: topic,
 		Name:           pubsubName,
+		IncomingData:   make(chan []byte),
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -91,7 +94,7 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 	}{
 		"", "", "",
 	}
-	err = json.Unmarshal(b, &in)
+	_ = json.Unmarshal(b, &in)
 	if err != nil {
 		return false, err
 	}
@@ -108,19 +111,17 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 		Service: in.Service,
 	})
 	if err != nil {
-		p.Publish(viper.GetString("dapr.publish.topic"), []byte(err.Error()))
-		// return nil, status.Error(codes.Unknown, fmt.Sprintf("Failed to call RPC method GetDescription: %v", err))
-		// s.Logger.Fatalf("Failed to call RPC method GetDescription: %v", err)
+		return false, err
 	}
 	b, err = json.Marshal(res)
 	if err != nil {
-		p.Logger.Fatal(err)
+		return false, err
 	}
 	err = p.Publish(viper.GetString("dapr.publish.topic"), b)
 	if err != nil {
-		p.Logger.Fatal(err)
+		return false, err
 	}
-	return false, err
+	return false, nil
 }
 
 func (p *PubSub) Publish(topic string, msg []byte) error {

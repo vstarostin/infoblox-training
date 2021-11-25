@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"infoblox-training-task-3/portal/pkg/pb"
@@ -105,8 +106,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 			Service: in.GetService(),
 		})
 		if err != nil {
-			return nil, status.Error(codes.Unknown, fmt.Sprintf("Failed to call RPC method GetDescription: %v", err))
-			// s.Logger.Fatalf("Failed to call RPC method GetDescription: %v", err)
+			return nil, status.Error(codes.Unknown, err.Error())
 		}
 		response := &pb.GetResponse{
 			Service:  res.GetService(),
@@ -131,7 +131,7 @@ func (s *server) GetUptime() string {
 }
 
 func (s *server) GetRequests() string {
-	return string(rune(s.requests))
+	return strconv.Itoa(int(s.requests))
 }
 
 func (s *server) GetTime() string {

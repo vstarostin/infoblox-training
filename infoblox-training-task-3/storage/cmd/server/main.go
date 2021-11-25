@@ -2,21 +2,19 @@ package main
 
 import (
 	"fmt"
-	"infoblox-training-task-3/storage/pkg/dapr"
 	"log"
 	"net"
 	"strings"
 
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"infoblox-training-task-3/storage/pkg/dapr"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
+	"github.com/infobloxopen/atlas-app-toolkit/server"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"github.com/infobloxopen/atlas-app-toolkit/server"
-
-	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 )
 
 func main() {

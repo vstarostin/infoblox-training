@@ -1,10 +1,12 @@
 package main
 
 import (
+	"time"
+
 	"infoblox-training-task-3/storage/pkg/dapr"
+	"infoblox-training-task-3/storage/pkg/model"
 	"infoblox-training-task-3/storage/pkg/pb"
 	"infoblox-training-task-3/storage/pkg/svc"
-	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
@@ -54,6 +56,10 @@ func NewGRPCServer(logger *logrus.Logger, pubsub *dapr.PubSub, dbConnectionStrin
 	if err != nil {
 		return nil, err
 	}
+	if isInit := db.HasTable(&model.ResponderMode{}); !isInit {
+		db.CreateTable(&model.ResponderMode{Mode: true})
+	}
+
 	// register service implementation with the grpcServer
 	s, err := svc.NewBasicServer(pubsub, db, viper.GetString("app.id"), time.Now(), 0)
 	if err != nil {
