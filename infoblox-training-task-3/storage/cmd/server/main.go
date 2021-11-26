@@ -6,7 +6,7 @@ import (
 	"net"
 	"strings"
 
-	"infoblox-training-task-3/storage/pkg/dapr"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/storage/pkg/dapr"
 
 	"github.com/infobloxopen/atlas-app-toolkit/gorm/resource"
 	"github.com/infobloxopen/atlas-app-toolkit/server"

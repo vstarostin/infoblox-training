@@ -1,4 +1,4 @@
-module infoblox-training-task-3/storage
+module github.com/vstarostin/infoblox-training/infoblox-training-task-3/storage
 
 go 1.16
 
@@ -8,6 +8,7 @@ require (
 	github.com/dapr/dapr v1.4.3
 	github.com/dapr/go-sdk v1.3.0
 	github.com/denisenkom/go-mssqldb v0.9.0 // indirect
+	github.com/google/uuid v1.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"infoblox-training-task-3/portal/pkg/pb"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/portal/pkg/pb"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"

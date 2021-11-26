@@ -1,4 +1,4 @@
-module infoblox-training-task-3/portal
+module github.com/vstarostin/infoblox-training/infoblox-training-task-3/portal
 
 go 1.16
 

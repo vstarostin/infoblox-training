@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"infoblox-training-task-3/storage/pkg/model"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/storage/pkg/model"
 
 	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/dapr/go-sdk/service/common"
@@ -39,7 +39,6 @@ type PubSub struct {
 }
 
 func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger, dbConnectionString string) (*PubSub, error) {
-	var err error
 	init := false
 	db, err := gorm.Open("postgres", dbConnectionString)
 	if err != nil {
@@ -109,19 +108,18 @@ func (p *PubSub) initSubscriber(appPort int) {
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
 	atomic.AddInt64(&p.requests, 1)
+
 	b, ok := e.Data.([]byte)
 	if !ok {
 		return false, fmt.Errorf(errTypeAssertion)
 	}
-	in := struct {
-		Command, Value, Service string
-	}{
-		"", "", "",
-	}
+
+	in := &model.Message{}
 	err = json.Unmarshal(b, &in)
 	if err != nil {
 		return false, err
 	}
+
 	var response string
 	switch in.Command {
 	case "info":
@@ -140,7 +138,12 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 	default:
 		response = errInvalidCommand
 	}
-	resp := struct{ Service, Response string }{Service: in.Service, Response: response}
+
+	resp := &model.MessagePubSub{
+		ID:       in.ID,
+		Service:  in.Service,
+		Response: response,
+	}
 	b, err = json.Marshal(resp)
 	if err != nil {
 		return true, err

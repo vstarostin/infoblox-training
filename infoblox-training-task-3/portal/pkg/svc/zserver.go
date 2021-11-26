@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"infoblox-training-task-3/portal/pkg/pb"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/portal/pkg/pb"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
