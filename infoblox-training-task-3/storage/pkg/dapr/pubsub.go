@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/storage/pkg/model"
@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	requestsDefaultCount                         = 0
+	requestsCount                                = 0
 	info, uptime, requests, timeStr, reset, mode = "INFO", "UPTIME", "REQUESTS", "TIME", "RESET", "MODE"
 	errTypeAssertion                             = "type assertion error"
 	errInvalidCommand                            = "please, use commands info, uptime, requests, mode, time or reset"
@@ -30,6 +30,7 @@ const (
 )
 
 type PubSub struct {
+	mu             sync.RWMutex
 	client         daprpb.DaprClient
 	db             *gorm.DB
 	Logger         *logrus.Logger
@@ -56,7 +57,7 @@ func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log 
 		Name:           pubsubName,
 		description:    viper.GetString("app.id"),
 		startTime:      time.Now().UTC(),
-		requests:       viper.GetInt64("app.requests"),
+		requests:       requestsCount,
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -109,7 +110,10 @@ func (p *PubSub) initSubscriber(appPort int) {
 
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
-	atomic.AddInt64(&p.requests, 1)
+
+	p.mu.Lock()
+	p.requests++
+	p.mu.Unlock()
 
 	b, ok := e.Data.([]byte)
 	if !ok {
@@ -125,7 +129,7 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 	var response string
 	switch in.Command {
 	case info:
-		response = p.GetDescription(in.Value)
+		response = p.HandlerDescription(in.Value)
 	case uptime:
 		response = p.GetUptime()
 	case requests:
@@ -170,20 +174,36 @@ func (p *PubSub) Publish(topic string, msg []byte) error {
 	return err
 }
 
-func (p *PubSub) GetDescription(value string) string {
-	if value == "" {
-		return p.description
-	}
-	p.description = value
+func (p *PubSub) SetDescription(Value string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.description = Value
+}
+
+func (p *PubSub) GetDescription() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	return p.description
 }
 
+func (p *PubSub) HandlerDescription(value string) string {
+	if value == "" {
+		return p.GetDescription()
+	}
+	p.SetDescription(value)
+	return p.GetDescription()
+}
+
 func (p *PubSub) GetUptime() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	uptime := time.Since(p.startTime)
 	return uptime.String()
 }
 
 func (p *PubSub) GetRequestsCount() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	return strconv.Itoa(int(p.requests))
 }
 
@@ -213,8 +233,10 @@ func (p *PubSub) ResponderModeStatus(in string) bool {
 }
 
 func (p *PubSub) Reset() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.description = viper.GetString("app.id")
-	p.requests = requestsDefaultCount
+	p.requests = requestsCount
 	p.startTime = time.Now().UTC()
 	return serviceRestarted
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/portal/pkg/pb"
@@ -24,6 +24,7 @@ const (
 
 type server struct {
 	Logger      *logrus.Logger
+	mu          sync.RWMutex
 	description string
 	startTime   time.Time
 	requests    int64
@@ -51,12 +52,15 @@ func (c *responderClient) Handler(ctx context.Context, in *pb.HandlerRequest, op
 }
 
 func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
-	atomic.AddInt64(&s.requests, 1)
+	s.mu.Lock()
+	s.requests++
+	s.mu.Unlock()
+
 	var response string
 	if in.GetService() == pb.Service_PORTAL {
 		switch in.GetCommand() {
 		case pb.Command_INFO:
-			response = s.GetDescription(in.Value)
+			response = s.DescriptionHandler(in.Value)
 		case pb.Command_UPTIME:
 			response = s.GetUptime()
 		case pb.Command_REQUESTS:
@@ -99,20 +103,36 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 }
 
-func (s *server) GetDescription(value string) string {
-	if value == "" {
-		return s.description
-	}
-	s.description = value
+func (s *server) GetDescription() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.description
 }
 
+func (s *server) SetDescription(value string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.description = value
+}
+
+func (s *server) DescriptionHandler(value string) string {
+	if value == "" {
+		return s.GetDescription()
+	}
+	s.SetDescription(value)
+	return s.GetDescription()
+}
+
 func (s *server) GetUptime() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	uptime := time.Since(s.startTime)
 	return uptime.String()
 }
 
 func (s *server) GetRequests() string {
+	s.mu.RLock()
+	defer s.mu.Unlock()
 	return strconv.Itoa(int(s.requests))
 }
 
@@ -121,6 +141,8 @@ func (s *server) GetTime() string {
 }
 
 func (s *server) Reset() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.description = viper.GetString("app.id")
 	s.requests = requestsCount
 	s.startTime = time.Now().UTC()

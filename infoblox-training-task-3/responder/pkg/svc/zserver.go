@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/dapr"
@@ -31,6 +31,7 @@ const (
 
 type server struct {
 	pubsub      *dapr.PubSub
+	mu          sync.RWMutex
 	description string
 	startTime   time.Time
 	requests    int64
@@ -38,13 +39,16 @@ type server struct {
 }
 
 func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
-	atomic.AddInt64(&s.requests, 1)
+	s.mu.Lock()
+	s.requests++
+	s.mu.Unlock()
+
 	var response string
 	var err error
 	if in.GetService() == pb.Service_RESPONDER {
 		switch in.GetCommand() {
 		case pb.Command_INFO:
-			response = s.GetDescription(in.Value)
+			response = s.DescriptionHandler(in.Value)
 		case pb.Command_UPTIME:
 			in.Command = pb.Command_MODE
 			response, err = s.GetUptime(in)
@@ -103,12 +107,24 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	return nil, status.Error(codes.Internal, modeFalseResponse)
 }
 
-func (s *server) GetDescription(value string) string {
-	if value == "" {
-		return s.description
-	}
-	s.description = value
+func (s *server) GetDescription() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.description
+}
+
+func (s *server) SetDescription(value string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.description = value
+}
+
+func (s *server) DescriptionHandler(value string) string {
+	if value == "" {
+		return s.GetDescription()
+	}
+	s.SetDescription(value)
+	return s.GetDescription()
 }
 
 func (s *server) GetUptime(in *pb.HandlerRequest) (string, error) {
@@ -126,16 +142,20 @@ func (s *server) GetUptime(in *pb.HandlerRequest) (string, error) {
 	if !value {
 		return modeFalseResponse, nil
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	uptime := time.Since(s.startTime)
 	return uptime.String(), nil
 }
 
 func (s *server) GetRequestsCount() string {
+	s.mu.RLock()
+	defer s.mu.Unlock()
 	return strconv.Itoa(int(s.requests))
 }
 
 func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
-	if in.GetValue() != "false" && in.GetValue() != "true" && in.GetValue() != "" {
+	if in.GetValue() != strconv.FormatBool(false) && in.GetValue() != strconv.FormatBool(true) && in.GetValue() != "" {
 		return "", fmt.Errorf(errInvalidValue)
 	}
 
@@ -166,11 +186,15 @@ func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 		if !ok {
 			return "", fmt.Errorf(errTypeAssertion)
 		}
+
 		mode, _ := strconv.ParseBool(response)
+		s.mu.Lock()
 		if mode != s.mode {
 			s.mode = mode
 			s.startTime = time.Now().UTC()
 		}
+		s.mu.Unlock()
+
 		return response, nil
 	case <-time.After(5 * time.Second):
 		return "", fmt.Errorf(serviceUnavailable)
@@ -182,8 +206,11 @@ func (s *server) GetTime() string {
 }
 
 func (s *server) Reset(in *pb.HandlerRequest) (string, error) {
+	s.mu.Lock()
 	s.description = viper.GetString("app.id")
 	s.requests = requestsCount
+	s.mu.Unlock()
+
 	in.Command = pb.Command_MODE
 	in.Value = strconv.FormatBool(true)
 	val, err := s.ResponderModeStatus(in)
