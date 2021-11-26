@@ -150,7 +150,7 @@ func (s *server) GetUptime(in *pb.HandlerRequest) (string, error) {
 
 func (s *server) GetRequestsCount() string {
 	s.mu.RLock()
-	defer s.mu.Unlock()
+	defer s.mu.RUnlock()
 	return strconv.Itoa(int(s.requests))
 }
 

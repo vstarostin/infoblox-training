@@ -24,6 +24,7 @@ const (
 
 type server struct {
 	Logger      *logrus.Logger
+	grpcConn    *grpc.ClientConn
 	mu          sync.RWMutex
 	description string
 	startTime   time.Time
@@ -80,12 +81,7 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	}
 
 	if in.GetService() == pb.Service_RESPONDER || in.GetService() == pb.Service_STORAGE {
-		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", viper.GetString("responder.address"), viper.GetString("responder.port")), grpc.WithInsecure())
-		if err != nil {
-			return nil, fmt.Errorf("failed to dial %s: %s", fmt.Sprintf("%s:%s", viper.GetString("responder.address"), viper.GetString("responder.port")), err)
-		}
-		defer conn.Close()
-		c := NewResponderClient(conn)
+		c := NewResponderClient(s.grpcConn)
 		res, err := c.Handler(context.Background(), &pb.HandlerRequest{
 			Value:   in.GetValue(),
 			Command: in.GetCommand(),
@@ -132,7 +128,7 @@ func (s *server) GetUptime() string {
 
 func (s *server) GetRequests() string {
 	s.mu.RLock()
-	defer s.mu.Unlock()
+	defer s.mu.RUnlock()
 	return strconv.Itoa(int(s.requests))
 }
 
@@ -149,11 +145,21 @@ func (s *server) Reset() string {
 	return serviceRestarted
 }
 
+func grpcConnection() (*grpc.ClientConn, error) {
+	return grpc.Dial(fmt.Sprintf("%s:%s", viper.GetString("responder.address"), viper.GetString("responder.port")), grpc.WithInsecure())
+}
+
 // NewBasicServer returns an instance of the default server interface
 func NewBasicServer(description string, startTime time.Time, requests int64) (pb.PortalServer, error) {
+	conn, err := grpcConnection()
+	if err != nil {
+		return nil, err
+	}
+
 	return &server{
 		description: description,
 		startTime:   startTime,
 		requests:    requests,
+		grpcConn:    conn,
 	}, nil
 }
