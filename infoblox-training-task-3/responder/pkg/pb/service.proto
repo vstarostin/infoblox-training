@@ -8,14 +8,30 @@ service Responder {
   rpc Handler (HandlerRequest) returns (HandlerResponse) {}
 }
 
+enum Command {
+  UNKNOWN = 0;
+  INFO = 1;
+  UPTIME = 2;
+  REQUESTS = 3;
+  MODE = 4;
+  TIME = 5;
+  RESET =6;
+};
+
+enum Service {
+  UNKNOW = 0;
+  PORTAL = 1;
+  RESPONDER = 2;
+  STORAGE = 3;
+};
+
 message HandlerRequest {
-  string command = 1;
+  Command command = 1;
   string value = 2;
-  string service = 3;
+  Service service = 3;
 }
 
 message HandlerResponse {
   string response = 1;
   string service = 2;
 }
-

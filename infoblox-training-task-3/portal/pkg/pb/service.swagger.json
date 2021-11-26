@@ -11,7 +11,7 @@
     "version": "version not set"
   },
   "paths": {
-    "/{service}": {
+    "/": {
       "post": {
         "tags": [
           "Portal"
@@ -19,25 +19,11 @@
         "operationId": "PortalPortal_Handler",
         "parameters": [
           {
-            "type": "string",
-            "name": "service",
-            "in": "path",
-            "required": true
-          },
-          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "command": {
-                  "type": "string"
-                },
-                "value": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/portalHandlerRequest"
             }
           }
         ],
@@ -59,6 +45,33 @@
     }
   },
   "definitions": {
+    "portalCommand": {
+      "type": "string",
+      "default": "UNKNOWN",
+      "enum": [
+        "UNKNOWN",
+        "INFO",
+        "UPTIME",
+        "REQUESTS",
+        "MODE",
+        "TIME",
+        "RESET"
+      ]
+    },
+    "portalHandlerRequest": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "$ref": "#/definitions/portalCommand"
+        },
+        "service": {
+          "$ref": "#/definitions/portalService"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "portalHandlerResponse": {
       "type": "object",
       "properties": {
@@ -69,6 +82,16 @@
           "type": "string"
         }
       }
+    },
+    "portalService": {
+      "type": "string",
+      "default": "UNKNOW",
+      "enum": [
+        "UNKNOW",
+        "PORTAL",
+        "RESPONDER",
+        "STORAGE"
+      ]
     },
     "rpcStatus": {}
   },

@@ -19,6 +19,7 @@ import (
 )
 
 const (
+	requestsCount       = 0
 	modeFalseResponse   = "service is temporarily disabled"
 	serviceUnavailable  = "service is unavailable"
 	serviceRestarted    = "service restarted"
@@ -40,20 +41,20 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	atomic.AddInt64(&s.requests, 1)
 	var response string
 	var err error
-	if in.GetService() == "responder" {
+	if in.GetService() == pb.Service_RESPONDER {
 		switch in.GetCommand() {
-		case "info":
+		case pb.Command_INFO:
 			response = s.GetDescription(in.Value)
-		case "uptime":
-			in.Command = "mode"
+		case pb.Command_UPTIME:
+			in.Command = pb.Command_MODE
 			response, err = s.GetUptime(in)
-		case "requests":
+		case pb.Command_REQUESTS:
 			response = s.GetRequestsCount()
-		case "mode":
+		case pb.Command_MODE:
 			response, err = s.ResponderModeStatus(in)
-		case "time":
+		case pb.Command_TIME:
 			response = s.GetTime()
-		case "reset":
+		case pb.Command_RESET:
 			response, err = s.Reset(in)
 		default:
 			return nil, status.Error(codes.InvalidArgument, errInvalidCommand)
@@ -61,18 +62,18 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
-		return &pb.HandlerResponse{Service: in.GetService(), Response: response}, nil
 
+		return &pb.HandlerResponse{Service: in.GetService().String(), Response: response}, nil
 	}
 
-	if in.GetService() == "storage" && s.mode {
+	if in.GetService() == pb.Service_STORAGE && s.mode {
 		id := uuid.New()
 
 		message := &model.Message{
 			ID:      id,
-			Command: in.GetCommand(),
+			Command: in.GetCommand().String(),
 			Value:   in.GetValue(),
-			Service: in.GetService(),
+			Service: in.GetService().String(),
 		}
 
 		b, err := json.Marshal(message)
@@ -94,7 +95,7 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 			if !ok {
 				return nil, status.Error(codes.Unknown, errTypeAssertion)
 			}
-			return &pb.HandlerResponse{Service: in.GetService(), Response: response}, nil
+			return &pb.HandlerResponse{Service: in.GetService().String(), Response: response}, nil
 		case <-time.After(5 * time.Second):
 			return nil, status.Error(codes.Internal, serviceUnavailable)
 		}
@@ -141,9 +142,9 @@ func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 	id := uuid.New()
 	message := &model.Message{
 		ID:      id,
-		Command: in.GetCommand(),
+		Command: in.GetCommand().String(),
 		Value:   in.GetValue(),
-		Service: in.GetService(),
+		Service: in.GetService().String(),
 	}
 
 	b, err := json.Marshal(message)
@@ -182,9 +183,9 @@ func (s *server) GetTime() string {
 
 func (s *server) Reset(in *pb.HandlerRequest) (string, error) {
 	s.description = viper.GetString("app.id")
-	s.requests = viper.GetInt64("app.requests")
-	in.Command = "mode"
-	in.Value = "true"
+	s.requests = requestsCount
+	in.Command = pb.Command_MODE
+	in.Value = strconv.FormatBool(true)
 	val, err := s.ResponderModeStatus(in)
 	if err != nil {
 		return "", err

@@ -79,7 +79,6 @@ const (
 	defaultDaprSubscribeTopic = "subscribe"
 
 	defaultResponderMode = true
-	defaultRequestsCount = 0
 )
 
 var (
@@ -145,5 +144,4 @@ var (
 	flagLoggingLevel = pflag.String("logging.level", defaultLoggingLevel, "log level of application")
 
 	flagResponderMode = pflag.Bool("app.mode", defaultResponderMode, "mode of application")
-	flagRequestsCount = pflag.Int64("app.requests", defaultRequestsCount, "requests count")
 )

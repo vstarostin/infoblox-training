@@ -17,11 +17,11 @@ import (
 )
 
 const (
+	requestsCount      = 0
 	serviceRestarted   = "service restarted"
 	errInvalidArgument = "please use commands: info, uptime, requests or reset"
 )
 
-// Default implementation of the Portal server interface
 type server struct {
 	Logger      *logrus.Logger
 	description string
@@ -52,31 +52,30 @@ func (c *responderClient) Handler(ctx context.Context, in *pb.HandlerRequest, op
 
 func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.HandlerResponse, error) {
 	atomic.AddInt64(&s.requests, 1)
-	s.requests++
 	var response string
-	if in.GetService() == "portal" {
+	if in.GetService() == pb.Service_PORTAL {
 		switch in.GetCommand() {
-		case "info":
+		case pb.Command_INFO:
 			response = s.GetDescription(in.Value)
-		case "uptime":
+		case pb.Command_UPTIME:
 			response = s.GetUptime()
-		case "requests":
+		case pb.Command_REQUESTS:
 			response = s.GetRequests()
-		case "time":
+		case pb.Command_TIME:
 			response = s.GetTime()
-		case "reset":
+		case pb.Command_RESET:
 			response = s.Reset()
 		default:
 			return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 		}
-		return &pb.HandlerResponse{Service: in.GetService(), Response: response}, nil
+		return &pb.HandlerResponse{Service: in.GetService().String(), Response: response}, nil
 
 	}
-	if in.GetService() == "storage" && in.GetCommand() == "mode" {
+	if in.GetService() == pb.Service_STORAGE && in.GetCommand() == pb.Command_MODE {
 		return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 	}
 
-	if in.GetService() == "responder" || in.GetService() == "storage" {
+	if in.GetService() == pb.Service_RESPONDER || in.GetService() == pb.Service_STORAGE {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", viper.GetString("responder.address"), viper.GetString("responder.port")), grpc.WithInsecure())
 		if err != nil {
 			return nil, fmt.Errorf("failed to dial %s: %s", fmt.Sprintf("%s:%s", viper.GetString("responder.address"), viper.GetString("responder.port")), err)
@@ -123,7 +122,7 @@ func (s *server) GetTime() string {
 
 func (s *server) Reset() string {
 	s.description = viper.GetString("app.id")
-	s.requests = 0
+	s.requests = requestsCount
 	s.startTime = time.Now().UTC()
 	return serviceRestarted
 }
