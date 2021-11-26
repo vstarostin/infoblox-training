@@ -6,9 +6,10 @@ const (
 	// configuration defaults support local development (i.e. "go run ...")
 
 	// Server
-	defaultServerAddress       = "0.0.0.0"
-	defaultServerPort          = "9092"
-	defaultResponderServerPort = "9095"
+	defaultServerAddress          = "0.0.0.0"
+	defaultResponderServerAddress = "0.0.0.0"
+	defaultServerPort             = "9092"
+	defaultResponderServerPort    = "9095"
 
 	// Gateway
 	defaultGatewayEnable      = true
@@ -75,9 +76,10 @@ const (
 
 var (
 	// define flag overrides
-	flagServerAddress       = pflag.String("server.address", defaultServerAddress, "adress of gRPC server")
-	flagServerPort          = pflag.String("server.port", defaultServerPort, "port of gRPC server")
-	flagResponderServerPort = pflag.String("responder.port", defaultResponderServerPort, "port of Responder gRPC server")
+	flagServerAddress          = pflag.String("server.address", defaultServerAddress, "adress of gRPC server")
+	flagServerPort             = pflag.String("server.port", defaultServerPort, "port of gRPC server")
+	flagResponderServerPort    = pflag.String("responder.port", defaultResponderServerPort, "port of Responder gRPC server")
+	flagResponderServerAddress = pflag.String("responder.address", defaultServerAddress, "adress of Responder gRPC server")
 
 	flagGatewayEnable      = pflag.Bool("gateway.enable", defaultGatewayEnable, "enable gatway")
 	flagGatewayAddress     = pflag.String("gateway.address", defaultGatewayAddress, "address of gateway server")

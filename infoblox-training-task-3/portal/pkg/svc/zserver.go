@@ -77,9 +77,9 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	}
 
 	if in.GetService() == "responder" || in.GetService() == "storage" {
-		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("responder.port")), grpc.WithInsecure())
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%s", viper.GetString("responder.address"), viper.GetString("responder.port")), grpc.WithInsecure())
 		if err != nil {
-			s.Logger.Fatalf("Failed to dial %s: %v", fmt.Sprintf("%s:%s", viper.GetString("server.address"), viper.GetString("responder.port")), err)
+			return nil, fmt.Errorf("failed to dial %s: %s", fmt.Sprintf("%s:%s", viper.GetString("responder.address"), viper.GetString("responder.port")), err)
 		}
 		defer conn.Close()
 		c := NewResponderClient(conn)
