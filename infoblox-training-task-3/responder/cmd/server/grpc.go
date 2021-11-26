@@ -1,10 +1,11 @@
 package main
 
 import (
-	"infoblox-training-task-3/responder/pkg/dapr"
-	"infoblox-training-task-3/responder/pkg/pb"
-	"infoblox-training-task-3/responder/pkg/svc"
 	"time"
+
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/dapr"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/pb"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/svc"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"

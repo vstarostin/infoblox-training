@@ -1,4 +1,4 @@
-module infoblox-training-task-3/responder
+module github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder
 
 go 1.16
 
@@ -7,6 +7,7 @@ replace github.com/spf13/afero => github.com/spf13/afero v1.5.1
 require (
 	github.com/dapr/dapr v1.4.3
 	github.com/dapr/go-sdk v1.3.0
+	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect

@@ -2,8 +2,12 @@ package dapr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
+
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/model"
 
 	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/dapr/go-sdk/service/common"
@@ -17,7 +21,8 @@ type PubSub struct {
 	Logger         *logrus.Logger
 	TopicSubscribe string
 	Name           string
-	IncomingData   chan []byte
+	IncomingData   sync.Map
+	Flag           chan struct{}
 }
 
 func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger) (*PubSub, error) {
@@ -27,7 +32,8 @@ func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log 
 		Logger:         log,
 		TopicSubscribe: topic,
 		Name:           pubsubName,
-		IncomingData:   make(chan []byte),
+		IncomingData:   sync.Map{},
+		Flag:           make(chan struct{}),
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -80,7 +86,11 @@ func (p *PubSub) initSubscriber(appPort int) {
 
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
-	p.IncomingData <- e.Data.([]byte)
+
+	var message *model.MessagePubSub
+	json.Unmarshal(e.Data.([]byte), &message)
+	p.IncomingData.Store(message.ID, message.Response)
+	p.Flag <- struct{}{}
 	return false, nil
 }
 

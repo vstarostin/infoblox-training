@@ -8,23 +8,26 @@ import (
 	"sync/atomic"
 	"time"
 
-	"infoblox-training-task-3/responder/pkg/dapr"
-	"infoblox-training-task-3/responder/pkg/pb"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/dapr"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/model"
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/responder/pkg/pb"
 
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 const (
-	modeFalseResponse  = "service is temporarily disabled"
-	serviceUnavailable = "service is unavailable"
-	serviceRestarted   = "service restarted"
-	errInvalidCommand  = "please, use commands: info, uptime, requests, mode, time or reset"
-	errInvalidValue    = "please, use correct value"
+	modeFalseResponse   = "service is temporarily disabled"
+	serviceUnavailable  = "service is unavailable"
+	serviceRestarted    = "service restarted"
+	errInvalidCommand   = "please, use commands: info, uptime, requests, mode, time or reset"
+	errInvalidValue     = "please, use correct value"
+	errTypeAssertion    = "type assertion error"
+	errFailedToLoadData = "failed to load data"
 )
 
-// Default implementation of the Responder server interface
 type server struct {
 	pubsub      *dapr.PubSub
 	description string
@@ -63,7 +66,16 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	}
 
 	if in.GetService() == "storage" && s.mode {
-		b, err := json.Marshal(in)
+		id := uuid.New()
+
+		message := &model.Message{
+			ID:      id,
+			Command: in.GetCommand(),
+			Value:   in.GetValue(),
+			Service: in.GetService(),
+		}
+
+		b, err := json.Marshal(message)
 		if err != nil {
 			return nil, status.Error(codes.Unknown, err.Error())
 		}
@@ -71,21 +83,23 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 		if err != nil {
 			return nil, status.Error(codes.Unknown, err.Error())
 		}
-		incomingData := struct{ Response, Service string }{"", ""}
 
 		select {
-		case data := <-s.pubsub.IncomingData:
-			err = json.Unmarshal(data, &incomingData)
-			if err != nil {
-				return nil, status.Error(codes.Unknown, err.Error())
+		case <-s.pubsub.Flag:
+			value, ok := s.pubsub.IncomingData.LoadAndDelete(id)
+			if !ok {
+				return nil, status.Error(codes.Unknown, errFailedToLoadData)
 			}
-			return &pb.HandlerResponse{Service: in.GetService(), Response: incomingData.Response}, nil
+			response, ok := value.(string)
+			if !ok {
+				return nil, status.Error(codes.Unknown, errTypeAssertion)
+			}
+			return &pb.HandlerResponse{Service: in.GetService(), Response: response}, nil
 		case <-time.After(5 * time.Second):
-			s.mode = false
-			return nil, status.Error(codes.Unknown, serviceUnavailable)
+			return nil, status.Error(codes.Internal, serviceUnavailable)
 		}
 	}
-	return nil, status.Error(codes.Unknown, modeFalseResponse)
+	return nil, status.Error(codes.Internal, modeFalseResponse)
 }
 
 func (s *server) GetDescription(value string) string {
@@ -123,7 +137,16 @@ func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 	if in.GetValue() != "false" && in.GetValue() != "true" && in.GetValue() != "" {
 		return "", fmt.Errorf(errInvalidValue)
 	}
-	b, err := json.Marshal(in)
+
+	id := uuid.New()
+	message := &model.Message{
+		ID:      id,
+		Command: in.GetCommand(),
+		Value:   in.GetValue(),
+		Service: in.GetService(),
+	}
+
+	b, err := json.Marshal(message)
 	if err != nil {
 		return "", err
 	}
@@ -131,25 +154,24 @@ func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	incomingData := struct{ Response, Service string }{"", ""}
 
 	select {
-	case data := <-s.pubsub.IncomingData:
-		err = json.Unmarshal(data, &incomingData)
-		if err != nil {
-			return "", err
+	case <-s.pubsub.Flag:
+		value, ok := s.pubsub.IncomingData.LoadAndDelete(id)
+		if !ok {
+			return "", fmt.Errorf(errFailedToLoadData)
 		}
-		mode, err := strconv.ParseBool(incomingData.Response)
-		if err != nil {
-			return "", err
+		response, ok := value.(string)
+		if !ok {
+			return "", fmt.Errorf(errTypeAssertion)
 		}
-		if s.mode != mode {
+		mode, _ := strconv.ParseBool(response)
+		if mode != s.mode {
+			s.mode = mode
 			s.startTime = time.Now().UTC()
 		}
-		s.mode = mode
-		return incomingData.Response, nil
+		return response, nil
 	case <-time.After(5 * time.Second):
-		s.mode = false
 		return "", fmt.Errorf(serviceUnavailable)
 	}
 }
@@ -174,7 +196,6 @@ func (s *server) Reset(in *pb.HandlerRequest) (string, error) {
 	return serviceRestarted, nil
 }
 
-// NewBasicServer returns an instance of the default server interface
 func NewBasicServer(pubsub *dapr.PubSub, description string, startTime time.Time, requests int64, mode bool) (pb.ResponderServer, error) {
 	return &server{
 		pubsub:      pubsub,
