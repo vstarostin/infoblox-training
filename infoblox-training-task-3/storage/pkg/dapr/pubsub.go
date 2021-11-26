@@ -22,9 +22,11 @@ import (
 )
 
 const (
-	errTypeAssertion  = "type assertion error"
-	errInvalidCommand = "please, use commands info, uptime, requests, mode, time or reset"
-	serviceRestarted  = "service restarted"
+	requestsDefaultCount                         = 0
+	info, uptime, requests, timeStr, reset, mode = "INFO", "UPTIME", "REQUESTS", "TIME", "RESET", "MODE"
+	errTypeAssertion                             = "type assertion error"
+	errInvalidCommand                            = "please, use commands info, uptime, requests, mode, time or reset"
+	serviceRestarted                             = "service restarted"
 )
 
 type PubSub struct {
@@ -122,17 +124,17 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 
 	var response string
 	switch in.Command {
-	case "info":
+	case info:
 		response = p.GetDescription(in.Value)
-	case "uptime":
+	case uptime:
 		response = p.GetUptime()
-	case "requests":
+	case requests:
 		response = p.GetRequestsCount()
-	case "time":
+	case timeStr:
 		response = p.GetTime()
-	case "reset":
+	case reset:
 		response = p.Reset()
-	case "mode":
+	case mode:
 		mode := p.ResponderModeStatus(in.Value)
 		response = strconv.FormatBool(mode)
 	default:
@@ -212,7 +214,7 @@ func (p *PubSub) ResponderModeStatus(in string) bool {
 
 func (p *PubSub) Reset() string {
 	p.description = viper.GetString("app.id")
-	p.requests = viper.GetInt64("app.requests")
+	p.requests = requestsDefaultCount
 	p.startTime = time.Now().UTC()
 	return serviceRestarted
 }
