@@ -71,40 +71,47 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 	}
 
 	if in.GetService() == pb.Service_STORAGE && s.mode {
-		id := uuid.New()
-
-		message := &model.Message{
-			ID:      id,
-			Command: in.GetCommand().String(),
-			Value:   in.GetValue(),
-			Service: in.GetService().String(),
-		}
-
-		b, err := json.Marshal(message)
+		response, err := s.RequestToStorage(in)
 		if err != nil {
 			return nil, status.Error(codes.Unknown, err.Error())
 		}
-		err = s.pubsub.Publish(viper.GetString("dapr.subscribe.topic"), b)
-		if err != nil {
-			return nil, status.Error(codes.Unknown, err.Error())
-		}
-
-		select {
-		case <-s.pubsub.Flag:
-			value, ok := s.pubsub.IncomingData.LoadAndDelete(id)
-			if !ok {
-				return nil, status.Error(codes.Unknown, errFailedToLoadData)
-			}
-			response, ok := value.(string)
-			if !ok {
-				return nil, status.Error(codes.Unknown, errTypeAssertion)
-			}
-			return &pb.HandlerResponse{Service: in.GetService().String(), Response: response}, nil
-		case <-time.After(5 * time.Second):
-			return nil, status.Error(codes.Internal, serviceUnavailable)
-		}
+		return &pb.HandlerResponse{Service: in.GetService().String(), Response: response}, nil
 	}
 	return nil, status.Error(codes.Internal, modeFalseResponse)
+}
+
+func (s *server) RequestToStorage(in *pb.HandlerRequest) (string, error) {
+	id := uuid.New()
+
+	message := &model.Message{
+		ID:      id,
+		Command: in.GetCommand().String(),
+		Value:   in.GetValue(),
+		Service: in.GetService().String(),
+	}
+
+	b, err := json.Marshal(message)
+	if err != nil {
+		return "", err
+	}
+	err = s.pubsub.Publish(viper.GetString("dapr.subscribe.topic"), b)
+	if err != nil {
+		return "", err
+	}
+
+	ch := make(chan string)
+	s.mu.Lock()
+	s.pubsub.IncomingData[id] = ch
+	s.mu.Unlock()
+
+	select {
+	case response := <-s.pubsub.IncomingData[id]:
+		s.DeleteFromMap(s.pubsub.IncomingData, id)
+		return response, nil
+	case <-time.After(5 * time.Second):
+		s.DeleteFromMap(s.pubsub.IncomingData, id)
+		return "", fmt.Errorf(errFailedToLoadData)
+	}
 }
 
 func (s *server) GetDescription() string {
@@ -159,46 +166,19 @@ func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 		return "", fmt.Errorf(errInvalidValue)
 	}
 
-	id := uuid.New()
-	message := &model.Message{
-		ID:      id,
-		Command: in.GetCommand().String(),
-		Value:   in.GetValue(),
-		Service: in.GetService().String(),
-	}
-
-	b, err := json.Marshal(message)
+	response, err := s.RequestToStorage(in)
 	if err != nil {
 		return "", err
 	}
-	err = s.pubsub.Publish(viper.GetString("dapr.subscribe.topic"), b)
-	if err != nil {
-		return "", err
+	mode, _ := strconv.ParseBool(response)
+	s.mu.Lock()
+	if mode != s.mode {
+		s.mode = mode
+		s.startTime = time.Now().UTC()
 	}
+	s.mu.Unlock()
 
-	select {
-	case <-s.pubsub.Flag:
-		value, ok := s.pubsub.IncomingData.LoadAndDelete(id)
-		if !ok {
-			return "", fmt.Errorf(errFailedToLoadData)
-		}
-		response, ok := value.(string)
-		if !ok {
-			return "", fmt.Errorf(errTypeAssertion)
-		}
-
-		mode, _ := strconv.ParseBool(response)
-		s.mu.Lock()
-		if mode != s.mode {
-			s.mode = mode
-			s.startTime = time.Now().UTC()
-		}
-		s.mu.Unlock()
-
-		return response, nil
-	case <-time.After(5 * time.Second):
-		return "", fmt.Errorf(serviceUnavailable)
-	}
+	return response, nil
 }
 
 func (s *server) GetTime() string {
@@ -222,6 +202,12 @@ func (s *server) Reset(in *pb.HandlerRequest) (string, error) {
 		return "", err
 	}
 	return serviceRestarted, nil
+}
+
+func (s *server) DeleteFromMap(m map[uuid.UUID]chan string, key uuid.UUID) {
+	s.mu.Lock()
+	delete(m, key)
+	s.mu.Unlock()
 }
 
 func NewBasicServer(pubsub *dapr.PubSub, description string, startTime time.Time, requests int64, mode bool) (pb.ResponderServer, error) {

@@ -12,17 +12,18 @@ import (
 	daprpb "github.com/dapr/dapr/pkg/proto/runtime/v1"
 	"github.com/dapr/go-sdk/service/common"
 	daprd "github.com/dapr/go-sdk/service/grpc"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 type PubSub struct {
+	mu             sync.RWMutex
 	client         daprpb.DaprClient
 	Logger         *logrus.Logger
 	TopicSubscribe string
 	Name           string
-	IncomingData   sync.Map
-	Flag           chan struct{}
+	IncomingData   map[uuid.UUID]chan string
 }
 
 func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log *logrus.Logger) (*PubSub, error) {
@@ -32,8 +33,7 @@ func InitPubsub(topic string, pubsubName string, appPort int, grpcPort int, log 
 		Logger:         log,
 		TopicSubscribe: topic,
 		Name:           pubsubName,
-		IncomingData:   sync.Map{},
-		Flag:           make(chan struct{}),
+		IncomingData:   make(map[uuid.UUID]chan string),
 	}
 
 	if pubsubName != "" && topic != "" && grpcPort >= 1 {
@@ -87,10 +87,16 @@ func (p *PubSub) initSubscriber(appPort int) {
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
 
-	var message *model.MessagePubSub
+	var message model.MessagePubSub
 	json.Unmarshal(e.Data.([]byte), &message)
-	p.IncomingData.Store(message.ID, message.Response)
-	p.Flag <- struct{}{}
+
+	p.mu.Lock()
+	ch, ok := p.IncomingData[message.ID]
+	p.mu.Unlock()
+	if !ok {
+		return false, nil
+	}
+	ch <- message.Response
 	return false, nil
 }
 
