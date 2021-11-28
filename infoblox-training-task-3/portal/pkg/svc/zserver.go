@@ -74,7 +74,6 @@ func (s *server) Handler(ctx context.Context, in *pb.HandlerRequest) (*pb.Handle
 			return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
 		}
 		return &pb.HandlerResponse{Service: in.GetService().String(), Response: response}, nil
-
 	}
 	if in.GetService() == pb.Service_STORAGE && in.GetCommand() == pb.Command_MODE {
 		return nil, status.Error(codes.InvalidArgument, errInvalidArgument)
