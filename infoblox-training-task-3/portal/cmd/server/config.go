@@ -76,10 +76,10 @@ const (
 
 var (
 	// define flag overrides
-	flagServerAddress          = pflag.String("server.address", defaultServerAddress, "adress of gRPC server")
+	flagServerAddress          = pflag.String("server.address", defaultServerAddress, "address of gRPC server")
 	flagServerPort             = pflag.String("server.port", defaultServerPort, "port of gRPC server")
 	flagResponderServerPort    = pflag.String("responder.port", defaultResponderServerPort, "port of Responder gRPC server")
-	flagResponderServerAddress = pflag.String("responder.address", defaultServerAddress, "adress of Responder gRPC server")
+	flagResponderServerAddress = pflag.String("responder.address", defaultServerAddress, "address of Responder gRPC server")
 
 	flagGatewayEnable      = pflag.Bool("gateway.enable", defaultGatewayEnable, "enable gatway")
 	flagGatewayAddress     = pflag.String("gateway.address", defaultGatewayAddress, "address of gateway server")

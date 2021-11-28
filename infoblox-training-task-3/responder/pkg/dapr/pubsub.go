@@ -17,6 +17,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const errTypeAssertion = "type assertion error"
+
 type PubSub struct {
 	mu             sync.RWMutex
 	client         daprpb.DaprClient
@@ -87,8 +89,16 @@ func (p *PubSub) initSubscriber(appPort int) {
 func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry bool, err error) {
 	p.Logger.Debugf("Incoming message from pubsub %q, topic %q, data: %s", e.PubsubName, e.Topic, e.Data)
 
+	b, ok := e.Data.([]byte)
+	if !ok {
+		return false, fmt.Errorf(errTypeAssertion)
+	}
+
 	var message model.MessagePubSub
-	json.Unmarshal(e.Data.([]byte), &message)
+	err = json.Unmarshal(b, &message)
+	if err != nil {
+		return false, nil
+	}
 
 	p.mu.Lock()
 	ch, ok := p.IncomingData[message.ID]

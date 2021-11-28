@@ -174,10 +174,10 @@ func (p *PubSub) Publish(topic string, msg []byte) error {
 	return err
 }
 
-func (p *PubSub) SetDescription(Value string) {
+func (p *PubSub) SetDescription(value string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.description = Value
+	p.description = value
 }
 
 func (p *PubSub) GetDescription() string {

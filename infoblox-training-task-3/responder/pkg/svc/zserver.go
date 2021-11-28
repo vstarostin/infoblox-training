@@ -21,11 +21,9 @@ import (
 const (
 	requestsCount       = 0
 	modeFalseResponse   = "service is temporarily disabled"
-	serviceUnavailable  = "service is unavailable"
 	serviceRestarted    = "service restarted"
 	errInvalidCommand   = "please, use commands: info, uptime, requests, mode, time or reset"
 	errInvalidValue     = "please, use correct value"
-	errTypeAssertion    = "type assertion error"
 	errFailedToLoadData = "failed to load data"
 )
 

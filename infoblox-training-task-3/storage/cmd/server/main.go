@@ -52,7 +52,6 @@ func NewLogger() *logrus.Logger {
 
 // ServeInternal builds and runs the server that listens on InternalAddress
 func ServeInternal(logger *logrus.Logger) error {
-
 	s, err := server.NewServer(
 		// register metrics
 		server.WithHandler("/metrics", promhttp.Handler()),
@@ -71,7 +70,10 @@ func ServeInternal(logger *logrus.Logger) error {
 
 func init() {
 	pflag.Parse()
-	viper.BindPFlags(pflag.CommandLine)
+	err := viper.BindPFlags(pflag.CommandLine)
+	if err != nil {
+		log.Fatalf("cannot bind flags: %v", err)
+	}
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AddConfigPath(viper.GetString("config.source"))
