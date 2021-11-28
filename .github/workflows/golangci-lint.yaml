@@ -1,0 +1,21 @@
+name: golangci-lint
+on:
+  pull_request:
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint for Portal
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ./infoblox-training-task-3/portal
+      - name: golangci-lint for Responder
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ./infoblox-training-task-3/responder
+      - name: golangci-lint for Storage
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ./infoblox-training-task-3/storage
