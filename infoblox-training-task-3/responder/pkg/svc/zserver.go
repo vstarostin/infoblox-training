@@ -172,7 +172,7 @@ func (s *server) ResponderModeStatus(in *pb.HandlerRequest) (string, error) {
 	s.mu.Lock()
 	if mode != s.mode {
 		s.mode = mode
-		s.startTime = time.Now().UTC()
+		// s.startTime = time.Now().UTC()
 	}
 	s.mu.Unlock()
 
