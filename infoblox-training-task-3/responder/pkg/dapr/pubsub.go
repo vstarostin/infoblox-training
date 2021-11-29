@@ -100,9 +100,9 @@ func (p *PubSub) eventHandler(ctx context.Context, e *common.TopicEvent) (retry 
 		return false, nil
 	}
 
-	p.mu.Lock()
+	p.mu.RLock()
 	ch, ok := p.IncomingData[message.ID]
-	p.mu.Unlock()
+	p.mu.RUnlock()
 	if !ok {
 		return false, nil
 	}
