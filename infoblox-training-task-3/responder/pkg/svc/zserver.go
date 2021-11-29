@@ -103,7 +103,7 @@ func (s *server) RequestToStorage(in *pb.HandlerRequest) (string, error) {
 	s.mu.Unlock()
 
 	select {
-	case response := <-s.pubsub.IncomingData[id]:
+	case response := <-ch:
 		s.DeleteFromMap(s.pubsub.IncomingData, id)
 		return response, nil
 	case <-time.After(5 * time.Second):
