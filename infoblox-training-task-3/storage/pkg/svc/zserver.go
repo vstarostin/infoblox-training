@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/storage/pkg/model"
+
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
-	"github.com/vstarostin/infoblox-training/infoblox-training-task-3/storage/pkg/model"
 )
 
 const (

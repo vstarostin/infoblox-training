@@ -7,9 +7,8 @@ const (
 
 	// Server
 	defaultServerAddress          = "0.0.0.0"
-	defaultResponderServerAddress = "0.0.0.0"
-	defaultServerPort             = "9092"
-	defaultResponderServerPort    = "9095"
+	defaultResponderServerAddress = "responder-service"
+	defaultServerPort             = "9090"
 
 	// Gateway
 	defaultGatewayEnable      = true
@@ -57,7 +56,7 @@ const (
 	// Health
 	defaultInternalEnable    = true
 	defaultInternalAddress   = "0.0.0.0"
-	defaultInternalPort      = "8089"
+	defaultInternalPort      = "8081"
 	defaultInternalHealth    = "/healthz"
 	defaultInternalReadiness = "/ready"
 
@@ -78,8 +77,8 @@ var (
 	// define flag overrides
 	flagServerAddress          = pflag.String("server.address", defaultServerAddress, "address of gRPC server")
 	flagServerPort             = pflag.String("server.port", defaultServerPort, "port of gRPC server")
-	flagResponderServerPort    = pflag.String("responder.port", defaultResponderServerPort, "port of Responder gRPC server")
-	flagResponderServerAddress = pflag.String("responder.address", defaultServerAddress, "address of Responder gRPC server")
+	flagResponderServerPort    = pflag.String("responder.port", defaultServerPort, "port of Responder gRPC server")
+	flagResponderServerAddress = pflag.String("responder.address", defaultResponderServerAddress, "address of Responder gRPC server")
 
 	flagGatewayEnable      = pflag.Bool("gateway.enable", defaultGatewayEnable, "enable gatway")
 	flagGatewayAddress     = pflag.String("gateway.address", defaultGatewayAddress, "address of gateway server")

@@ -7,7 +7,7 @@ const (
 
 	// Server
 	defaultServerAddress = "0.0.0.0"
-	defaultServerPort    = "9095"
+	defaultServerPort    = "9090"
 
 	// Gateway
 	defaultGatewayEnable      = false
@@ -55,7 +55,7 @@ const (
 	// Health
 	defaultInternalEnable    = true
 	defaultInternalAddress   = "0.0.0.0"
-	defaultInternalPort      = "8083"
+	defaultInternalPort      = "8081"
 	defaultInternalHealth    = "/healthz"
 	defaultInternalReadiness = "/ready"
 
@@ -75,7 +75,7 @@ const (
 	defaultDaprPubsubName     = "pubsub"
 	defaultDaprGrpcPort       = 50001
 	defaultDaprPublishTopic   = "publish"
-	defaultDaprAppPort        = 1251
+	defaultDaprAppPort        = 1250
 	defaultDaprSubscribeTopic = "subscribe"
 
 	defaultResponderMode = true

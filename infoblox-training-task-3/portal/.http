@@ -1,4 +1,4 @@
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "PORTAL",
@@ -7,7 +7,7 @@ POST http://0.0.0.0:8080/portal/v1/
 }
 
 ###
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "RESPONDER",
@@ -16,7 +16,7 @@ POST http://0.0.0.0:8080/portal/v1/
 }
 
 ###
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "STORAGE",
@@ -25,7 +25,7 @@ POST http://0.0.0.0:8080/portal/v1/
 }
 
 ###
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "RESPONDER",
@@ -34,7 +34,7 @@ POST http://0.0.0.0:8080/portal/v1/
 }
 
 ###
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "STORAGE",
@@ -43,7 +43,7 @@ POST http://0.0.0.0:8080/portal/v1/
 }
 
 ###
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "STORAGE",
@@ -51,7 +51,7 @@ POST http://0.0.0.0:8080/portal/v1/
 }
 
 ###
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "STORAGE",
@@ -59,7 +59,7 @@ POST http://0.0.0.0:8080/portal/v1/
 }
 
 ###
-POST http://0.0.0.0:8080/portal/v1/
+POST http://192.168.64.7:30000/portal/v1/
 
 {
     "service": "STORAGE",

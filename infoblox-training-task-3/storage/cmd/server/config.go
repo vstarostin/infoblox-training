@@ -21,7 +21,7 @@ const (
 	// DSN example: "postgres://postgres:postgres@postgres:5432/atlas_db?sslmode=disable"
 	defaultDatabaseDSN      = ""
 	defaultDatabaseType     = "postgres"
-	defaultDatabaseAddress  = "0.0.0.0"
+	defaultDatabaseAddress  = "postgres-service"
 	defaultDatabasePort     = "5432"
 	defaultDatabaseName     = "storage"
 	defaultDatabaseUser     = "postgres"
@@ -73,7 +73,7 @@ const (
 
 	// Dapr
 	defaultDaprPubsubName     = "pubsub"
-	defaultDaprGrpcPort       = 50002
+	defaultDaprGrpcPort       = 50001
 	defaultDaprPublishTopic   = "publish"
 	defaultDaprAppPort        = 1250
 	defaultDaprSubscribeTopic = "subscribe"
