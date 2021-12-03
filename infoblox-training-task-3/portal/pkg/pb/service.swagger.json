@@ -1,0 +1,103 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "infoblox-training-task-3/portal/pkg/pb/service.proto",
+    "version": "version not set"
+  },
+  "paths": {
+    "/": {
+      "post": {
+        "tags": [
+          "Portal"
+        ],
+        "operationId": "PortalPortal_Handler",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/portalHandlerRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/portalHandlerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "portalCommand": {
+      "type": "string",
+      "default": "UNKNOWN",
+      "enum": [
+        "UNKNOWN",
+        "INFO",
+        "UPTIME",
+        "REQUESTS",
+        "MODE",
+        "TIME",
+        "RESET"
+      ]
+    },
+    "portalHandlerRequest": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "$ref": "#/definitions/portalCommand"
+        },
+        "service": {
+          "$ref": "#/definitions/portalService"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "portalHandlerResponse": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "type": "string"
+        },
+        "service": {
+          "type": "string"
+        }
+      }
+    },
+    "portalService": {
+      "type": "string",
+      "default": "UNKNOW",
+      "enum": [
+        "UNKNOW",
+        "PORTAL",
+        "RESPONDER",
+        "STORAGE"
+      ]
+    },
+    "rpcStatus": {}
+  },
+  "tags": [
+    {
+      "name": "Portal"
+    }
+  ]
+}

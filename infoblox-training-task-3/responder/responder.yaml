@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: responder
+  labels:
+    app: responder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: responder
+  template:
+    metadata:
+      labels:
+        app: responder
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "responder"
+        dapr.io/app-protocol: "grpc"
+        dapr.io/app-port: "1250"
+        dapr.io/log-level: "debug"
+        dapr.io/metrics-port: "9091"	
+    spec:
+      containers:
+      - name: responder
+        image: 542011/responder
+        ports:
+        - containerPort: 9090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: responder-service
+spec:
+  selector:
+    app: responder
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+      nodePort: 30001

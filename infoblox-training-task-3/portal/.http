@@ -1,0 +1,67 @@
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "PORTAL",
+    "command": "INFO",
+    "value": ""
+}
+
+###
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "RESPONDER",
+    "command": "INFO",
+    "value": ""
+}
+
+###
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "STORAGE",
+    "command": "INFO",
+    "value": ""
+}
+
+###
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "RESPONDER",
+    "command": "MODE",
+    "value": ""
+}
+
+###
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "STORAGE",
+    "command": "UPTIME",
+    "value": ""
+}
+
+###
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "STORAGE",
+    "command": "REQUESTS"
+}
+
+###
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "STORAGE",
+    "command": "TIME"
+}
+
+###
+POST http://192.168.64.7:30000/portal/v1/
+
+{
+    "service": "STORAGE",
+    "command": "RESET"
+}

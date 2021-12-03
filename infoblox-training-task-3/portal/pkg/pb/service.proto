@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package portal;
+
+import "google/api/annotations.proto";
+
+option go_package = "infoblox-training-task-3/portal/pkg/pb;pb";
+
+service Portal {
+  rpc Handler (HandlerRequest) returns (HandlerResponse) {
+    option (google.api.http) = {
+      post: "/"
+      body: "*"
+    };
+  }
+}
+
+enum Command {
+  UNKNOWN = 0;
+  INFO = 1;
+  UPTIME = 2;
+  REQUESTS = 3;
+  MODE = 4;
+  TIME = 5;
+  RESET =6;
+};
+
+enum Service {
+  UNKNOW = 0;
+  PORTAL = 1;
+  RESPONDER = 2;
+  STORAGE = 3;
+};
+
+message HandlerRequest {
+  Command command = 1;
+  string value = 2;
+  Service service = 3;
+}
+
+message HandlerResponse {
+  string response = 1;
+  string service = 2;
+}
